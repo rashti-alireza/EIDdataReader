@@ -388,7 +388,7 @@ int EIDpreGrid(tL *const level)
   if(Getv("EIDdateReader_physics","BHNS"))
   {
     FILE *file = 0;
-    char *const file_NAME = BHNS_"geometry_and_physics.txt";
+    char *const file_NAME = BHNS_"properties.txt";
     double ns_m,bh_m;/* gravitational masses of NS and BH */
     double ns_center_x,ns_center_y,ns_center_z;/* NS center coords */
     double bh_center_x,bh_center_y,bh_center_z;/* BH center coords */
@@ -398,7 +398,7 @@ int EIDpreGrid(tL *const level)
     char str[STR_LEN_MAX] = {'\0'};
     int ret;
     
-    /* open bbn_geometry_and_physics.txt */
+    /* open ?_properties.txt */
     sprintf(str,"%s",Gets("EIDdataReader_datadir"));/* --> a/b/c */
     if (str[strlen(str)-1] == '/')/* if there is / at the end of path */
       str[strlen(str)-1] = '\0';/* if a/b/c/ */
@@ -408,10 +408,10 @@ int EIDpreGrid(tL *const level)
     if(!file) 
       errorexits("could not open %s", file_path);
 
-    /* read parameters from bbn_geometry_and_physics.txt */
-    READ_PARAMETER_FROM_FILE(x_CM,"x_CM")
-    READ_PARAMETER_FROM_FILE(y_CM,"y_CM")
-    READ_PARAMETER_FROM_FILE(z_CM,"z_CM")
+    /* read parameters from ?_properties.txt */
+    READ_PARAMETER_FROM_FILE(x_CM,BHNS_"x_CM")
+    READ_PARAMETER_FROM_FILE(y_CM,BHNS_"y_CM")
+    READ_PARAMETER_FROM_FILE(z_CM,BHNS_"z_CM")
     
     /* set CM params for translation */
     Setd("EIDdateReader_x_CM",x_CM);
@@ -446,7 +446,7 @@ int EIDpreGrid(tL *const level)
   else if(Getv("EIDdateReader_physics","SBH"))
   {
     FILE *file = 0;
-    char *const file_NAME = "sbh_geometry_and_physics.txt";
+    char *const file_NAME = SBH_"properties.txt";
     double ns_m,bh_m;/* gravitational masses of NS and BH */
     double ns_center_x,ns_center_y,ns_center_z;/* NS center coords */
     double bh_center_x,bh_center_y,bh_center_z;/* BH center coords */
@@ -456,7 +456,7 @@ int EIDpreGrid(tL *const level)
     char str[STR_LEN_MAX] = {'\0'};
     int ret;
     
-    /* open bbn_geometry_and_physics.txt */
+    /* open ?_properties.txt */
     sprintf(str,"%s",Gets("EIDdataReader_datadir"));/* --> a/b/c */
     if (str[strlen(str)-1] == '/')/* if there is / at the end of path */
       str[strlen(str)-1] = '\0';/* if a/b/c/ */
@@ -466,10 +466,10 @@ int EIDpreGrid(tL *const level)
     if(!file) 
       errorexits("could not open %s", file_path);
 
-    /* read parameters from bbn_geometry_and_physics.txt */
-    READ_PARAMETER_FROM_FILE(x_CM,"x_CM")
-    READ_PARAMETER_FROM_FILE(y_CM,"y_CM")
-    READ_PARAMETER_FROM_FILE(z_CM,"z_CM")
+    /* read parameters from ?_properties.txt */
+    READ_PARAMETER_FROM_FILE(x_CM,SBH_"x_CM")
+    READ_PARAMETER_FROM_FILE(y_CM,SBH_"y_CM")
+    READ_PARAMETER_FROM_FILE(z_CM,SBH_"z_CM")
     
     /* set CM params for translation */
     Setd("EIDdateReader_x_CM",x_CM);

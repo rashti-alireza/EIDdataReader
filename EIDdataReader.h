@@ -1,8 +1,8 @@
 #include <assert.h>
 
-/* file and parameter prefix */
-#define BHNS_ "bhns_"
-#define SBH_  "sbh_"
+/* file and parameter prefix, let's keep them capitalized */
+#define BHNS_ "BHNS_"
+#define SBH_  "SBH_"
 
 
 #define STR_LEN_MAX   (1000)
