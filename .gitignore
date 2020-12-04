@@ -1,0 +1,12 @@
+#Ignore the following:
+
+# ignore backup joe files:
+*.*~ 
+*~
+DEADJOE
+#.gitignore
+
+
+Makefile
+
+
