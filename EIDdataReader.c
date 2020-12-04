@@ -296,7 +296,7 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     errorexits("could not open %s", id_parfile_path);
     
   /* adding these paramters to Elliptica parfile to direct */
-  if(Getv("EIDdateReader_physics","BHNS")
+  if(Getv("EIDdateReader_physics","BHNS"))
   {
     fprintf(id_parfile,"\n");
     fprintf(id_parfile,BHNS_"bam_export_id        = yes\n");
@@ -306,7 +306,7 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     fprintf(id_parfile,BHNS_"bam_checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,BHNS_"bam_BHfiller         = %s",Gets("EIDdateReader_elliptica_BHfiller"));
   }
-  else if(Getv("EIDdateReader_physics","SBH")
+  else if(Getv("EIDdateReader_physics","SBH"))
   {
     fprintf(id_parfile,"\n");
     fprintf(id_parfile,SBH_"bam_export_id        = yes\n");
@@ -385,7 +385,7 @@ int EIDpreGrid(tL *const level)
   /* set pre grid parameters */
   printf("Setting some parameters relevant for setting up bam's grid:\n");
   
-  if(Getv("EIDdateReader_physics","BHNS")
+  if(Getv("EIDdateReader_physics","BHNS"))
   {
     FILE *file = 0;
     char *const file_NAME = BHNS_"geometry_and_physics.txt";
@@ -443,7 +443,7 @@ int EIDpreGrid(tL *const level)
     
     fclose(file);
   }
-  else if(Getv("EIDdateReader_physics","SBH")
+  else if(Getv("EIDdateReader_physics","SBH"))
   {
     FILE *file = 0;
     char *const file_NAME = "sbh_geometry_and_physics.txt";
