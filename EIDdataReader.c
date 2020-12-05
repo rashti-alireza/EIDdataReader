@@ -299,23 +299,23 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   if(Getv("EIDdateReader_physics","BHNS"))
   {
     fprintf(id_parfile,"\n");
-    fprintf(id_parfile,BHNS_"bam_export_id        = yes\n");
-    fprintf(id_parfile,BHNS_"bam_coords_file_path = %s\n",coords_file_path);
-    fprintf(id_parfile,BHNS_"bam_fields_file_path = %s\n",fields_file_path);
-    fprintf(id_parfile,BHNS_"bam_fields_name      = %s\n",str);
-    fprintf(id_parfile,BHNS_"bam_checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,BHNS_"bam_BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,BHNS_ EVO_"export_id        = yes\n");
+    fprintf(id_parfile,BHNS_ EVO_"coords_file_path = %s\n",coords_file_path);
+    fprintf(id_parfile,BHNS_ EVO_"fields_file_path = %s\n",fields_file_path);
+    fprintf(id_parfile,BHNS_ EVO_"fields_name      = %s\n",str);
+    fprintf(id_parfile,BHNS_ EVO_"checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
+    fprintf(id_parfile,BHNS_ EVO_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
     fprintf(id_parfile,"\n");
   }
   else if(Getv("EIDdateReader_physics","SBH"))
   {
     fprintf(id_parfile,"\n");
-    fprintf(id_parfile,SBH_"bam_export_id        = yes\n");
-    fprintf(id_parfile,SBH_"bam_coords_file_path = %s\n",coords_file_path);
-    fprintf(id_parfile,SBH_"bam_fields_file_path = %s\n",fields_file_path);
-    fprintf(id_parfile,SBH_"bam_fields_name      = %s\n",str);
-    fprintf(id_parfile,SBH_"bam_checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,SBH_"bam_BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,SBH_ EVO_"export_id        = yes\n");
+    fprintf(id_parfile,SBH_ EVO_"coords_file_path = %s\n",coords_file_path);
+    fprintf(id_parfile,SBH_ EVO_"fields_file_path = %s\n",fields_file_path);
+    fprintf(id_parfile,SBH_ EVO_"fields_name      = %s\n",str);
+    fprintf(id_parfile,SBH_ EVO_"checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
+    fprintf(id_parfile,SBH_ EVO_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
     fprintf(id_parfile,"\n");
   }
   else

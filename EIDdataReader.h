@@ -1,8 +1,9 @@
 #include <assert.h>
 
-/* file and parameter prefix, let's keep them capitalized */
+/* file and parameter prefix, let's keep them capitalized for Elliptica */
 #define BHNS_ "BHNS_"
 #define SBH_  "SBH_"
+#define EVO_  "BAM_"
 
 
 #define STR_LEN_MAX   (1000)
