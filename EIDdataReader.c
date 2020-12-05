@@ -72,7 +72,7 @@ int EIDdataReader(tL *const level)
   populate_fields_for_bam(level,fields_file_path);
   
   /* delete files */
-  if (1)
+  if (DELETE)
   {
      char command[STR_LEN_MAX2x]={'\0'};
      int ret;
@@ -304,7 +304,7 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     fprintf(id_parfile,Pbhns_"coords_file_path = %s\n",coords_file_path);
     fprintf(id_parfile,Pbhns_"fields_file_path = %s\n",fields_file_path);
     fprintf(id_parfile,Pbhns_"fields_name      = %s\n",str);
-    fprintf(id_parfile,Pbhns_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,Pbhns_"BHfiller         = %s\n",Gets("EIDdateReader_BHfiller"));
     fprintf(id_parfile,Pbhns_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,BHNS_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,"\n");
@@ -317,7 +317,7 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     fprintf(id_parfile,Psbh_"coords_file_path = %s\n",coords_file_path);
     fprintf(id_parfile,Psbh_"fields_file_path = %s\n",fields_file_path);
     fprintf(id_parfile,Psbh_"fields_name      = %s\n",str);
-    fprintf(id_parfile,Psbh_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,Psbh_"BHfiller         = %s\n",Gets("EIDdateReader_BHfiller"));
     fprintf(id_parfile,Psbh_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,SBH_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,"\n");
@@ -336,10 +336,14 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   fflush(stdout);
 
   /* remove par id_parfile */
-  sprintf(command,"rm -rf %s",id_parfile_path);/* rm -rf outdir/idfile_elliptica_level?_proc?.par */
-  printf("System call:\n%s\n",command);
-  fflush(stdout);
-  ret = system(command);
+  if (DELETE)
+  {
+    /* rm -rf outdir/idfile_elliptica_level?_proc?.par */
+    sprintf(command,"rm -rf %s",id_parfile_path);
+    printf("System call:\n%s\n",command);
+    fflush(stdout);
+    ret = system(command);
+  }
   printf("System call returned: %d\n", ret);
   fflush(stdout);
 }
