@@ -299,23 +299,27 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   if(Getv("EIDdateReader_physics","BHNS"))
   {
     fprintf(id_parfile,"\n");
-    fprintf(id_parfile,BHNS_ EVO_"export_id        = yes\n");
-    fprintf(id_parfile,BHNS_ EVO_"coords_file_path = %s\n",coords_file_path);
-    fprintf(id_parfile,BHNS_ EVO_"fields_file_path = %s\n",fields_file_path);
-    fprintf(id_parfile,BHNS_ EVO_"fields_name      = %s\n",str);
-    fprintf(id_parfile,BHNS_ EVO_"checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,BHNS_ EVO_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,BHNS_ EVO_"export_id    = yes\n");
+    fprintf(id_parfile,Pbhns_"export_id        = yes\n");
+    fprintf(id_parfile,Pbhns_"coords_file_path = %s\n",coords_file_path);
+    fprintf(id_parfile,Pbhns_"fields_file_path = %s\n",fields_file_path);
+    fprintf(id_parfile,Pbhns_"fields_name      = %s\n",str);
+    fprintf(id_parfile,Pbhns_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,Pbhns_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
+    fprintf(id_parfile,BHNS_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,"\n");
   }
   else if(Getv("EIDdateReader_physics","SBH"))
   {
     fprintf(id_parfile,"\n");
-    fprintf(id_parfile,SBH_ EVO_"export_id        = yes\n");
-    fprintf(id_parfile,SBH_ EVO_"coords_file_path = %s\n",coords_file_path);
-    fprintf(id_parfile,SBH_ EVO_"fields_file_path = %s\n",fields_file_path);
-    fprintf(id_parfile,SBH_ EVO_"fields_name      = %s\n",str);
-    fprintf(id_parfile,SBH_ EVO_"checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,SBH_ EVO_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,SBH_ EVO_"export_id    = yes\n");
+    fprintf(id_parfile,Psbh_"export_id        = yes\n");
+    fprintf(id_parfile,Psbh_"coords_file_path = %s\n",coords_file_path);
+    fprintf(id_parfile,Psbh_"fields_file_path = %s\n",fields_file_path);
+    fprintf(id_parfile,Psbh_"fields_name      = %s\n",str);
+    fprintf(id_parfile,Psbh_"BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,Psbh_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
+    fprintf(id_parfile,SBH_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,"\n");
   }
   else

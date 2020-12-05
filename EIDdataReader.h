@@ -5,6 +5,12 @@
 #define SBH_  "SBH_"
 #define EVO_  "BAM_"
 
+/* instruct Elliptica to save new changes in checkpoint parameter */
+#define MODIFY "modify_checkpoint_par:"
+
+/* handy macro */
+#define Pbhns_ MODIFY BHNS_ EVO_
+#define Psbh_  MODIFY SBH_  EVO_
 
 #define STR_LEN_MAX   (1000)
 #define STR_LEN_MAX2x (2000)
