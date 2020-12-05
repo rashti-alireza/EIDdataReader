@@ -304,7 +304,8 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     fprintf(id_parfile,BHNS_"bam_fields_file_path = %s\n",fields_file_path);
     fprintf(id_parfile,BHNS_"bam_fields_name      = %s\n",str);
     fprintf(id_parfile,BHNS_"bam_checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,BHNS_"bam_BHfiller         = %s",Gets("EIDdateReader_elliptica_BHfiller"));
+    fprintf(id_parfile,BHNS_"bam_BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,"\n");
   }
   else if(Getv("EIDdateReader_physics","SBH"))
   {
@@ -314,7 +315,8 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     fprintf(id_parfile,SBH_"bam_fields_file_path = %s\n",fields_file_path);
     fprintf(id_parfile,SBH_"bam_fields_name      = %s\n",str);
     fprintf(id_parfile,SBH_"bam_checkpoint_path  = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,SBH_"bam_BHfiller         = %s",Gets("EIDdateReader_elliptica_BHfiller"));
+    fprintf(id_parfile,SBH_"bam_BHfiller         = %s",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,"\n");
   }
   else
     errorexits("No such %s implemented!",Gets("EIDdateReader_physics"));
@@ -486,6 +488,7 @@ int EIDpreGrid(tL *const level)
     // note: r_elliptica = r_CM + r_bam 
     //       = > r_bam = r_elliptica - r_CM. */
     Setd("mass1", bh_m);
+    Setd("mass2", 0);
     Setd("px1", bh_center_x-x_CM);
     Setd("py1", bh_center_y-y_CM);
     Setd("pz1", bh_center_z-z_CM);
