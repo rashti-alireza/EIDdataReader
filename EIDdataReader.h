@@ -3,6 +3,8 @@
 /* file and parameter prefix, let's keep them capitalized for Elliptica */
 #define BHNS_ "BHNS_"
 #define SBH_  "SBH_"
+#define BHNS  "BHNS"
+#define SBH   "SBH"
 #define EVO_  "BAM_"
 
 /* instruct Elliptica to save new changes in checkpoint parameter */
