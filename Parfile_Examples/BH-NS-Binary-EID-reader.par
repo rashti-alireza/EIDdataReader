@@ -30,7 +30,8 @@ AHmod_time                  = 0.249*8  #around 2
 EIDdataReader_exe      = ?
 EIDdataReader_datadir  = ?
 EIDdateReader_physics  = BHNS
-EIDdateReader_BHfiller = ChebTn_Ylm
+EIDdateReader_BHfiller = ChebTn_Ylm_perfect_s2
+
 
 ############################################################################
 # checkpointing
