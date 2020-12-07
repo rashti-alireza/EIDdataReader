@@ -28,10 +28,13 @@ void bam_EIDdataReader(void)
   "BHNS: BH-NS binary"
   "SBH : single BH");
   
-  AddPar("EIDdateReader_BHfiller","ChebTn_Ylm",
-   "ChebTn_Ylm:fill excised BH with data demanding C2 continuity "
-   "across horizon and extrapolant is "
-   "f(r,th,ph) = C_{ilm}*ChebyshevT(i,r)*Ylm(th,ph).");
+  AddPar("EIDdateReader_BHfiller","ChebTn_Ylm_perfect_s2",
+   "options:"
+   "ChebTn_Ylm_perfect_s2:"
+   "  fill excised BH with data demanding C2 continuity for perfect S2"
+   "ChebTn_general_s2:"
+   "  fill excised BH with data demanding C2 continuity for general S2"
+   "none: no filling.");
   
   AddPar("EIDdateReader_x_CM","0","elliptica's x_CM of system");
   AddPar("EIDdateReader_y_CM","0","elliptica's y_CM of system");
