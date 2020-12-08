@@ -3,14 +3,14 @@
 #include "bam.h"
 #include "EIDdataReader.h"
 
-/* initialize the following fields using the initial data.
+/* initialize the following fields imported using the initial data.
 // NOTE: in Elliptica fields are the same as variables in BAM.
 // NOTE: for more info about the following fields look:
 // 'bam_adm.c' and 'bam_grhd.c' files.
 // NOTE: we assume the upper and lower inidices defined in those above
 // files won't be changing, otherwise we need to change them in Elliptica 
 // as well. */
-static char *required_field[] = 
+static const char *import_fields[] = 
 {
 "alpha",/* lapse: alpha */
 "betax","betay","betaz",/* shift: beta^i */
@@ -131,18 +131,18 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
     errorexit("It could not find the header.\n");
   free(match_str);
   f = 0;
-  while(required_field[f])
+  while(import_fields[f])
   {
     /* read field name */
     FReadP_bin(v_name);
-    if(strcmp(v_name,required_field[f]))
+    if(strcmp(v_name,import_fields[f]))
        errorexit("It could not find the field.\n");
        
     /* free */
     free(v_name);
     
     /* enable */   
-    int comp = Ind(required_field[f]);
+    int comp = Ind(import_fields[f]);
     enablevarcomp(level, comp);
     v = level->v[comp];
     
@@ -285,9 +285,9 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   /* modifying parfile for bam */        
   i = 0;
   str[0] = '\0';
-  while(required_field[i])
+  while(import_fields[i])
   {
-    strcat(str,required_field[i]);
+    strcat(str,import_fields[i]);
     strcat(str,",");
     i++;
   }
