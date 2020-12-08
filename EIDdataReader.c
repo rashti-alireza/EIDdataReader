@@ -10,7 +10,7 @@
 // NOTE: we assume the upper and lower inidices defined in those above
 // files won't be changing, otherwise we need to change them in Elliptica 
 // as well. */
-static const char *import_fields[] = 
+static const char *const import_fields_with_matter[] = /* matter included */
 {
 "alpha",/* lapse: alpha */
 "betax","betay","betaz",/* shift: beta^i */
@@ -18,22 +18,25 @@ static const char *import_fields[] =
 "adm_gyy","adm_gyz","adm_gzz",/* metric: g_ij */
 "adm_Kxx","adm_Kxy","adm_Kxz",/* extrinsic curvature: K_ij */
 "adm_Kyy","adm_Kyz","adm_Kzz",/* extrinsic curvature: K_ij */
-"grhd_vx","grhd_vy","grhd_vz",/* primitive v, from BNSdata v^i defined: 
-                              // v^i = u^i/(alpha u^0) + beta^i / alpha */
-                         
+
+/* matter part */
 "grhd_rho",/* primitive rho */
 "grhd_p",/* primitive p */
 "grhd_epsl",/* primitive epsilon: total_energy_density = grhd_rho(1+grhd_epsl)*/
-     
-//"adm_rho",/* ADM rho */
-//"adm_Sx","adm_Sy","adm_Sz",/* ADM S^i */
-//"adm_SSxx","adm_SSxy","adm_SSxz",/* ADM S_ij */
-//"adm_SSyy","adm_SSyz","adm_SSzz",/* ADM S_ij */
-//"adm_dpsiopsix","adm_dpsiopsiy","adm_dpsiopsiz",
-//"adm_psi",
-//"adm_ddpsiopsixx","adm_ddpsiopsixy","adm_ddpsiopsixz",
-//"adm_ddpsiopsiyy","adm_ddpsiopsiyz","adm_ddpsiopsizz",
+"grhd_vx","grhd_vy","grhd_vz",/* primitive v, from BNSdata v^i defined: 
+                              // v^i = u^i/(alpha u^0) + beta^i / alpha */
+                         
+  0/* --> detemine the last pointer */
+};
 
+static const char *const import_fields_no_matter[] = /* matter excluded */
+{
+"alpha",/* lapse: alpha */
+"betax","betay","betaz",/* shift: beta^i */
+"adm_gxx","adm_gxy","adm_gxz",/* metric: g_ij */
+"adm_gyy","adm_gyz","adm_gzz",/* metric: g_ij */
+"adm_Kxx","adm_Kxy","adm_Kxz",/* extrinsic curvature: K_ij */
+"adm_Kyy","adm_Kyz","adm_Kzz",/* extrinsic curvature: K_ij */
   0/* --> detemine the last pointer */
 };
 
@@ -130,31 +133,67 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
   if (strcmp(match_str,HEADER))
     errorexit("It could not find the header.\n");
   free(match_str);
-  f = 0;
-  while(import_fields[f])
+  
+  /* read fields content */
+  if(Getv("EIDdateReader_physics",BHNS))
   {
-    /* read field name */
-    FReadP_bin(v_name);
-    if(strcmp(v_name,import_fields[f]))
-       errorexit("It could not find the field.\n");
-       
-    /* free */
-    free(v_name);
-    
-    /* enable */   
-    int comp = Ind(import_fields[f]);
-    enablevarcomp(level, comp);
-    v = level->v[comp];
-    
-    /* read field value */
-    forallpoints(level,i)
+    f = 0;
+    while(import_fields_with_matter[f])
     {
-      FReadV_bin(v[i]);
-      ASSERT(isfinite(v[i]));
+      /* read field name */
+      FReadP_bin(v_name);
+      if(strcmp(v_name,import_fields_with_matter[f]))
+         errorexit("It could not find the field.\n");
+         
+      /* free */
+      free(v_name);
+      
+      /* enable */   
+      int comp = Ind(import_fields_with_matter[f]);
+      enablevarcomp(level, comp);
+      v = level->v[comp];
+      
+      /* read field value */
+      forallpoints(level,i)
+      {
+        FReadV_bin(v[i]);
+        ASSERT(isfinite(v[i]));
+      }
+      
+      ++f;
     }
-    
-    ++f;
   }
+  else if(Getv("EIDdateReader_physics",SBH))
+  {
+    f = 0;
+    while(import_fields_no_matter[f])
+    {
+      /* read field name */
+      FReadP_bin(v_name);
+      if(strcmp(v_name,import_fields_no_matter[f]))
+         errorexit("It could not find the field.\n");
+         
+      /* free */
+      free(v_name);
+      
+      /* enable */   
+      int comp = Ind(import_fields_no_matter[f]);
+      enablevarcomp(level, comp);
+      v = level->v[comp];
+      
+      /* read field value */
+      forallpoints(level,i)
+      {
+        FReadV_bin(v[i]);
+        ASSERT(isfinite(v[i]));
+      }
+      
+      ++f;
+    }
+  }
+  else
+    errorexits("No such %s implemented!",Gets("EIDdateReader_physics"));
+    
   FReadP_bin(match_str);/* read footer */
   if (strcmp(match_str,FOOTER))
     errorexit("It could not find the footer.\n");
@@ -172,12 +211,15 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
   i = Ind("adm_dpsiopsix");   enablevar(level, i);
   i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
   
+  if(Getv("EIDdateReader_physics",BHNS))
+  {
   /* set S_i's and S_ij's */
-  i = Ind("adm_Sx");   enablevar(level, i);
-  i = Ind("adm_SSxx"); enablevar(level, i);
-  
-  /* amd_rho */
-  i = Ind("adm_rho"); enablevar(level, i);
+    i = Ind("adm_Sx");   enablevar(level, i);
+    i = Ind("adm_SSxx"); enablevar(level, i);
+    
+    /* amd_rho */
+    i = Ind("adm_rho"); enablevar(level, i);
+  }
   
   double *gxx = Ptr(level, "adm_gxx");
   double *gxy = Ptr(level, "adm_gxy");
@@ -282,15 +324,7 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   printf("System call returned: %d\n",ret);
   fflush(stdout);
   
-  /* modifying parfile for bam */        
-  i = 0;
-  str[0] = '\0';
-  while(import_fields[i])
-  {
-    strcat(str,import_fields[i]);
-    strcat(str,",");
-    i++;
-  }
+  /* modifying Elliptica parfile for bam */        
   id_parfile = fopen(id_parfile_path,"a");
   if (!id_parfile)
     errorexits("could not open %s", id_parfile_path);
@@ -298,6 +332,14 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   /* adding these paramters to Elliptica parfile to direct */
   if(Getv("EIDdateReader_physics",BHNS))
   {
+      i = 0;
+    str[0] = '\0';
+    while(import_fields_with_matter[i])
+    {
+      strcat(str,import_fields_with_matter[i]);
+      strcat(str,",");
+      i++;
+    }
     fprintf(id_parfile,"\n");
     fprintf(id_parfile,BHNS_ EVO_"export_id    = yes\n");
     fprintf(id_parfile,Pbhns_"export_id        = yes\n");
@@ -311,6 +353,15 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   }
   else if(Getv("EIDdateReader_physics",SBH))
   {
+    i = 0;
+    str[0] = '\0';
+    while(import_fields_no_matter[i])
+    {
+      strcat(str,import_fields_no_matter[i]);
+      strcat(str,",");
+      i++;
+    }
+    
     fprintf(id_parfile,"\n");
     fprintf(id_parfile,SBH_ EVO_"export_id    = yes\n");
     fprintf(id_parfile,Psbh_"export_id        = yes\n");
