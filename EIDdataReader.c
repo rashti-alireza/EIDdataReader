@@ -487,8 +487,8 @@ int EIDpreGrid(tL *const level)
     READ_PARAMETER_FROM_FILE(bh_center_y,"BH_center_y")
     READ_PARAMETER_FROM_FILE(bh_center_z,"BH_center_z")
     
-    READ_PARAMETER_FROM_FILE(ns_m,"NS_baryonic_mass")
-    READ_PARAMETER_FROM_FILE(bh_m,"BH_irreducible_mass")
+    READ_PARAMETER_FROM_FILE(ns_m,"NS_baryonic_mass_current")
+    READ_PARAMETER_FROM_FILE(bh_m,"BH_irreducible_mass_current")
     
     /* set pre grid params 
     // note: r_elliptica = r_CM + r_bam 
