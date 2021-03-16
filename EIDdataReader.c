@@ -53,10 +53,14 @@ int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
   
-  const char *const outdir = Gets("outdir");
+  const char *const outdir = Gets("EIDdataReader_outdir");
   const int rank = bampi_rank();
   char coords_file_path[STR_LEN_MAX] = {'\0'};
   char fields_file_path[STR_LEN_MAX] = {'\0'};
+  
+  /* mkdir outdir if not exist */
+  if (rank == 0 && !system_isdir(outdir))
+    if (system_mkdir(outdir)) errorexit("mkdir failed!");
   
   /* files path */
   sprintf(coords_file_path, "%s/coords_level%d_proc%d.dat", 
@@ -278,7 +282,7 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
 static void call_elliptica_and_write_fields(tL *const level,char *const coords_file_path, char *const fields_file_path)
 {
   const int rank = bampi_rank();
-  const char *const outdir = Gets("outdir");
+  const char *const outdir = Gets("EIDdataReader_outdir");
   FILE *id_parfile = 0;
   char command[STR_LEN_MAX] = {'\0'};
   char elliptica_parfile[STR_LEN_MAX] = {'\0'};
