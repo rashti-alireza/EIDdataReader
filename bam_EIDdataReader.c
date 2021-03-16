@@ -26,6 +26,12 @@ void bam_EIDdataReader(void)
   AddPar("EIDdataReader_outdir", "elliptica_id",
          "location of imported initial data for bam");
 
+  /* mkdir outdir if not exists */
+  char mydir[STR_LEN_MAX];
+  sprintf(mydir,"%s/%s",Gets("outdir"),Gets("EIDdataReader_outdir"));
+  if (processor0 && !system_isdir(mydir))
+    if (system_mkdir(mydir)) errorexit("mkdir failed!");
+
   AddPar("EIDdateReader_physics", "BHNS",
   "The physical system which this initial data was constructed."
   "options:"

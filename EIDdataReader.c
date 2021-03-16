@@ -69,14 +69,6 @@ int EIDdataReader(tL *const level)
   }
   else/* make everything from scratch */
   {
-    /* mkdir outdir if not exists */
-    char mydir[STR_LEN_MAX];
-    sprintf(mydir,"%s/%s",outdir,Gets("EIDdataReader_outdir"));
-    if (processor0 && !system_isdir(mydir))
-      if (system_mkdir(mydir)) errorexit("mkdir failed!");
-    
-    bampi_barrier();
-      
     /* files path */
     sprintf(coords_file_path, "%s/%s/coords_level%d_proc%d.dat", 
       outdir,Gets("EIDdataReader_outdir"), level->l, rank);
