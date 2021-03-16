@@ -53,28 +53,46 @@ int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
   
-  const char *const outdir = Gets("EIDdataReader_outdir");
+  const char *const outdir = Gets("outdir");
   const int rank = bampi_rank();
   char coords_file_path[STR_LEN_MAX] = {'\0'};
   char fields_file_path[STR_LEN_MAX] = {'\0'};
   
-  /* files path */
-  sprintf(coords_file_path, "%s/coords_level%d_proc%d.dat", 
-    outdir, level->l, rank);
+  /* if this is a checkpoint, just read field values from files */
+  if(Getv("checkpoint","restart"))
+  {
+    sprintf(fields_file_path, "%s_previous/%s/fields_level%d_proc%d.dat",
+      outdir,Gets("EIDdataReader_outdir"), level->l, rank);
+
+    /* populate fields for bam */
+    populate_fields_for_bam(level,fields_file_path);
+  }
+  else/* make everything from scratch */
+  {
+    /* mkdir outdir if not exists */
+    char mydir[STR_LEN_MAX];
+    sprintf(mydir,"%s/%s",outdir,Gets("EIDdataReader_outdir"));
+    if (processor0 && !system_isdir(mydir))
+      if (system_mkdir(mydir)) errorexit("mkdir failed!");
+      
+    /* files path */
+    sprintf(coords_file_path, "%s/%s/coords_level%d_proc%d.dat", 
+      outdir,Gets("EIDdataReader_outdir"), level->l, rank);
+    
+    sprintf(fields_file_path, "%s/%s/fields_level%d_proc%d.dat", 
+      outdir,Gets("EIDdataReader_outdir"),level->l, rank);
+    
+    /* write cartesian coords into file */
+    write_coords(level,coords_file_path);
+    
+    /* call elliptica and interpolate at (x,y,z) given by the coords file */
+    call_elliptica_and_write_fields(level,coords_file_path,fields_file_path);
+    
+    /* populate fields for bam */
+    populate_fields_for_bam(level,fields_file_path);
+  }
   
-  sprintf(fields_file_path, "%s/fields_level%d_proc%d.dat", 
-    outdir, level->l, rank);
-  
-  /* write cartesian coords into file */
-  write_coords(level,coords_file_path);
-  
-  /* call elliptica and interpolate at (x,y,z) given by the coords file */
-  call_elliptica_and_write_fields(level,coords_file_path,fields_file_path);
-  
-  /* populate fields for bam */
-  populate_fields_for_bam(level,fields_file_path);
-  
-  /* delete files */
+  /* delete all created files */
   if (DELETE)
   {
      char command[STR_LEN_MAX2x]={'\0'};
@@ -94,6 +112,7 @@ int EIDdataReader(tL *const level)
      printf("System call returned: %d\n",ret);
      fflush(stdout);
   }
+  
   printf("} Importing initial data from Elliptica --> Done.\n");
   fflush(stdout);
   return 0;
@@ -278,7 +297,7 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
 static void call_elliptica_and_write_fields(tL *const level,char *const coords_file_path, char *const fields_file_path)
 {
   const int rank = bampi_rank();
-  const char *const outdir = Gets("EIDdataReader_outdir");
+  const char *const outdir = Gets("outdir");
   FILE *id_parfile = 0;
   char command[STR_LEN_MAX] = {'\0'};
   char elliptica_parfile[STR_LEN_MAX] = {'\0'};
@@ -313,11 +332,12 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
   
   sprintf(id_parfile_name,"%s_elliptica_level%d_proc%d.par",
           stem,level->l,rank);/* idfile_elliptica_level?_proc?.par */
-  sprintf(command,"cp %s %s/%s",
-          id_parfile_path,outdir,
+  sprintf(command,"cp %s %s/%s/%s",
+          id_parfile_path,outdir,Gets("EIDdataReader_outdir"),
           id_parfile_name);/* cp idfile.par idfile_elliptica_level?_proc?.par */
-  sprintf(id_parfile_path,"%s/%s",
-          outdir,id_parfile_name);/* outdir/idfile_elliptica_level?_proc?.par */
+  sprintf(id_parfile_path,"%s/%s/%s",
+          outdir,Gets("EIDdataReader_outdir"),
+          id_parfile_name);/* outdir/idfile_elliptica_level?_proc?.par */
   printf("System call:\n%s\n",command);
   fflush(stdout);
   ret = system(command);
