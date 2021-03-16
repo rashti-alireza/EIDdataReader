@@ -516,6 +516,18 @@ int EIDpreGrid(tL *const level)
     Setd("py2", bh_center_y-y_CM);
     Setd("pz2", bh_center_z-z_CM);
     
+    /* for BHfiller */
+    if (1)
+    {
+      /* note these params should be added in param files with 
+      // some values and then the correct values are set here. */
+      Setd("bhmass1",0.);
+      Setd("bhmass2",bh_m);
+      Setd("bhx2", bh_center_x-x_CM);
+      Setd("bhy2", bh_center_y-y_CM);
+      Setd("bhz2", bh_center_z-z_CM);
+    }
+    
     fclose(file);
   }
   else if(Getv("EIDdateReader_physics",SBH))
