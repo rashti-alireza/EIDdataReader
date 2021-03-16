@@ -52,6 +52,14 @@ void bam_EIDdataReader(void)
   AddPar("mass1","1.0", "used in grid setup at PRE_GRID");
   AddPar("mass2","1.0", "used in grid setup at PRE_GRID");
   
+  AddPar("bhmass1","0.",  "used in BHfiller");
+  AddPar("bhmass2","0.",  "used in BHfiller");
+  AddPar("bhx1","0.",     "used in BHfiller");
+  AddPar("bhy1","0.", 	  "used in BHfiller");
+  AddPar("bhz1","0.", 	  "used in BHfiller");
+  AddPar("bhx2","0.",     "used in BHfiller");
+  AddPar("bhy2","0.",     "used in BHfiller");
+  AddPar("bhz2","0.",     "used in BHfiller");
 }
 
 
