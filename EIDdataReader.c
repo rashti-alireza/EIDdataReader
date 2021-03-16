@@ -59,7 +59,7 @@ int EIDdataReader(tL *const level)
   char fields_file_path[STR_LEN_MAX] = {'\0'};
   
   /* mkdir outdir if not exist */
-  if (rank == 0 && !system_isdir(outdir))
+  if (processor0 && !system_isdir(outdir))
     if (system_mkdir(outdir)) errorexit("mkdir failed!");
   
   /* files path */
