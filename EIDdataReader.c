@@ -58,10 +58,6 @@ int EIDdataReader(tL *const level)
   char coords_file_path[STR_LEN_MAX] = {'\0'};
   char fields_file_path[STR_LEN_MAX] = {'\0'};
   
-  /* mkdir outdir if not exist */
-  if (processor0 && !system_isdir(outdir))
-    if (system_mkdir(outdir)) errorexit("mkdir failed!");
-  
   /* files path */
   sprintf(coords_file_path, "%s/coords_level%d_proc%d.dat", 
     outdir, level->l, rank);

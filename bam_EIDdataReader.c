@@ -28,7 +28,10 @@ void bam_EIDdataReader(void)
   char mydir[STR_LEN_MAX];
   sprintf(mydir,"%s/%s",Gets("outdir"),"elliptica_id");
   Sets("EIDdataReader_outdir",mydir);
-  
+  /* mkdir outdir if not exist */
+  if (processor0 && !system_isdir(mydir))
+    if (system_mkdir(mydir)) errorexit("mkdir failed!");
+
   AddPar("EIDdateReader_physics", "BHNS",
   "The physical system which this initial data was constructed."
   "options:"
