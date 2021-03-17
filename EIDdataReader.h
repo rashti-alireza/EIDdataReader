@@ -1,7 +1,7 @@
 #include <assert.h>
 
 /* bothered with compiler warning for const qualifier? */
-#define const const
+#define const 
 
 /* file and parameter prefix, let's keep them capitalized for Elliptica */
 #define BHNS_ "BHNS_"
