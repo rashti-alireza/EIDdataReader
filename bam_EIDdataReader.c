@@ -3,6 +3,8 @@
 #include "bam.h"
 #include "bam_EIDdataReader.h"
 
+#define STR_LEN_MAX (1000)
+
 /* get binary black hole neutron star initial data into bam */
 void bam_EIDdataReader(void) 
 {
