@@ -84,27 +84,29 @@ int EIDdataReader(tL *const level)
     
     /* populate fields for bam */
     populate_fields_for_bam(level,fields_file_path);
-  }
-  
-  /* delete all created files */
-  if (DELETE)
-  {
-     char command[STR_LEN_MAX2x]={'\0'};
-     int ret;
-     
-     sprintf(command,"rm -rf %s",coords_file_path);
-     printf("System call:\n%s\n",command);
-     fflush(stdout);
-     ret = system(command);
-     printf("System call returned: %d\n",ret);
-     fflush(stdout);
-     
-     sprintf(command,"rm -rf %s",fields_file_path);
-     printf("System call:\n%s\n",command);
-     fflush(stdout);
-     ret = system(command);
-     printf("System call returned: %d\n",ret);
-     fflush(stdout);
+    
+    /* delete created files */
+    if (DELETE)
+    {
+       char command[STR_LEN_MAX2x]={'\0'};
+       int ret;
+       
+       sprintf(command,"rm -rf %s",coords_file_path);
+       printf("System call:\n%s\n",command);
+       fflush(stdout);
+       ret = system(command);
+       printf("System call returned: %d\n",ret);
+       fflush(stdout);
+       
+       /* delete interpolated fields:
+       sprintf(command,"rm -rf %s",fields_file_path);
+       printf("System call:\n%s\n",command);
+       fflush(stdout);
+       ret = system(command);
+       printf("System call returned: %d\n",ret);
+       fflush(stdout); 
+       */
+    }
   }
   
   printf("} Importing initial data from Elliptica --> Done.\n");

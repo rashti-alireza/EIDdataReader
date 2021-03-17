@@ -27,7 +27,7 @@
 #define ASSERT assert
 
 /* deleting files created by Elliptica */
-#define DELETE 0
+#define DELETE (1)
 
 /* this is how we write binary data: first write size and then value. 
 // thus, when we wanna read the data the first one gives of the memory allocation 
