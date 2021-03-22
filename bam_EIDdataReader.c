@@ -24,6 +24,12 @@ void bam_EIDdataReader(void)
   AddPar("EIDdataReader_datadir", "",
          "location of elliptica outdir with data");
   
+  /* load from this dir */
+  AddPar("EIDdataReader_loadfrom", "not_set!",
+         "if this param is set, it won't call Elliptica anymore and "
+         "just reads data from the given directory."
+         "Used to quickly load data into bam for debug purposes.");
+  
   /* set output directory */
   AddPar("EIDdataReader_outdir", "elliptica_id",
          "location of imported initial data for bam");

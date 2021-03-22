@@ -67,6 +67,15 @@ int EIDdataReader(tL *const level)
     /* populate fields for bam */
     populate_fields_for_bam(level,fields_file_path);
   }
+  /* if requested to load from specific directory */
+  else if (!Getv("EIDdataReader_loadfrom","not_set!"))
+  {
+    sprintf(fields_file_path, "%s/fields_level%d_proc%d.dat",
+        Gets("EIDdataReader_loadfrom"), level->l, rank);
+    
+    /* populate fields for bam */
+    populate_fields_for_bam(level,fields_file_path);
+  }
   else/* make everything from scratch */
   {
     /* files path */
