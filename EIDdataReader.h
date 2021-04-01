@@ -76,6 +76,10 @@ if (x){\
   y = atof(str);\
   printf("%-30s = %+g\n",x,y);
 
+/* Setd and print */
+#define MySetd(x,y) \
+  Setd(x,(y)); \
+  printf("%-30s = %+g\n",x,(y));
 
 int EIDdataReader(tL *const level);
 int EIDpreGrid(tL *const level);

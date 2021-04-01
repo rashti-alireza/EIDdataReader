@@ -500,9 +500,9 @@ int EIDpreGrid(tL *const level)
     READ_PARAMETER_FROM_FILE(z_CM,BHNS_"z_CM")
     
     /* set CM params for translation */
-    Setd("EIDdateReader_x_CM",x_CM);
-    Setd("EIDdateReader_y_CM",y_CM);
-    Setd("EIDdateReader_z_CM",z_CM);
+    MySetd("EIDdateReader_x_CM",x_CM);
+    MySetd("EIDdateReader_y_CM",y_CM);
+    MySetd("EIDdateReader_z_CM",z_CM);
     
     READ_PARAMETER_FROM_FILE(ns_center_x,"NS_center_x")
     READ_PARAMETER_FROM_FILE(ns_center_y,"NS_center_y")
@@ -518,24 +518,24 @@ int EIDpreGrid(tL *const level)
     /* set pre grid params 
     // note: r_elliptica = r_CM + r_bam 
     //       = > r_bam = r_elliptica - r_CM. */
-    Setd("mass1", ns_m);
-    Setd("mass2", bh_m);
-    Setd("px1", ns_center_x-x_CM);
-    Setd("py1", ns_center_y-y_CM);
-    Setd("pz1", ns_center_z-z_CM);
-    Setd("px2", bh_center_x-x_CM);
-    Setd("py2", bh_center_y-y_CM);
-    Setd("pz2", bh_center_z-z_CM);
+    MySetd("mass1", ns_m);
+    MySetd("mass2", bh_m);
+    MySetd("px1", ns_center_x-x_CM);
+    MySetd("py1", ns_center_y-y_CM);
+    MySetd("pz1", ns_center_z-z_CM);
+    MySetd("px2", bh_center_x-x_CM);
+    MySetd("py2", bh_center_y-y_CM);
+    MySetd("pz2", bh_center_z-z_CM);
     
     /* for BHfiller */
     if (1)
     {
       /* note: the notation different here and object 1 is bh. */
-      Setd("bhmass1",bh_m);
-      Setd("bhmass2",0.);
-      Setd("bhx1", bh_center_x-x_CM);
-      Setd("bhy1", bh_center_y-y_CM);
-      Setd("bhz1", bh_center_z-z_CM);
+      MySetd("bhmass1",bh_m);
+      MySetd("bhmass2",0.);
+      MySetd("bhx1", bh_center_x-x_CM);
+      MySetd("bhy1", bh_center_y-y_CM);
+      MySetd("bhz1", bh_center_z-z_CM);
     }
     
     fclose(file);
@@ -569,9 +569,9 @@ int EIDpreGrid(tL *const level)
     READ_PARAMETER_FROM_FILE(z_CM,SBH_"z_CM")
     
     /* set CM params for translation */
-    Setd("EIDdateReader_x_CM",x_CM);
-    Setd("EIDdateReader_y_CM",y_CM);
-    Setd("EIDdateReader_z_CM",z_CM);
+    MySetd("EIDdateReader_x_CM",x_CM);
+    MySetd("EIDdateReader_y_CM",y_CM);
+    MySetd("EIDdateReader_z_CM",z_CM);
     
     READ_PARAMETER_FROM_FILE(bh_center_x,"BH_center_x")
     READ_PARAMETER_FROM_FILE(bh_center_y,"BH_center_y")
@@ -582,11 +582,11 @@ int EIDpreGrid(tL *const level)
     /* set pre grid params 
     // note: r_elliptica = r_CM + r_bam 
     //       = > r_bam = r_elliptica - r_CM. */
-    Setd("mass1", bh_m);
-    Setd("mass2", 0);
-    Setd("px1", bh_center_x-x_CM);
-    Setd("py1", bh_center_y-y_CM);
-    Setd("pz1", bh_center_z-z_CM);
+    MySetd("mass1", bh_m);
+    MySetd("mass2", 0);
+    MySetd("px1", bh_center_x-x_CM);
+    MySetd("py1", bh_center_y-y_CM);
+    MySetd("pz1", bh_center_z-z_CM);
     
     fclose(file);
   }
