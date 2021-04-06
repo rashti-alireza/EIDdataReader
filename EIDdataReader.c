@@ -9,7 +9,13 @@
 // 'bam_adm.c' and 'bam_grhd.c' files.
 // NOTE: we assume the upper and lower inidices defined in those above
 // files won't be changing, otherwise we need to change them in Elliptica 
-// as well. */
+// as well.
+// NOTE: initial data generally are made in a corotating frame. 
+// when importing the initial data in BAM, there must be a transformation
+// from this corotating frame to another frame such that the new one 
+// asymptotically behaves like an inertial frame. In practice, 
+// we ignore omega *r part of shifts vector and transform other fields
+// consequently.  */
 static const char *const import_fields_with_matter[] = /* matter included */
 {
 "alpha",/* lapse: alpha */
@@ -23,8 +29,10 @@ static const char *const import_fields_with_matter[] = /* matter included */
 "grhd_rho",/* primitive rho */
 "grhd_p",/* primitive p */
 "grhd_epsl",/* primitive epsilon: total_energy_density = grhd_rho(1+grhd_epsl)*/
-"grhd_vx","grhd_vy","grhd_vz",/* primitive v, from BNSdata v^i defined: 
-                              // v^i = u^i/(alpha u^0) + beta^i / alpha */
+"grhd_vx","grhd_vy","grhd_vz",/* primitive v, measured by an Eulerian observer, 
+                              // from BNSdata v^i defined: 
+                              // v^i = u^i/(alpha u^0) + beta^i / alpha
+                              // where u^{mu}=(u^0,u^i) is the 4-velocity of the fluid */
                          
   0/* --> detemine the last pointer */
 };
