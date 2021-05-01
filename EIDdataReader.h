@@ -11,7 +11,7 @@
 #define EVO_  "BAM_"
 
 /* instruct Elliptica to save new changes in checkpoint parameter */
-#define MODIFY "modify_checkpoint_par:"
+#define MODIFY "modify:"
 
 /* handy macro */
 #define Pbhns_ MODIFY BHNS_ EVO_

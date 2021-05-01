@@ -30,9 +30,8 @@ static const char *const import_fields_with_matter[] = /* matter included */
 "grhd_p",/* primitive p */
 "grhd_epsl",/* primitive epsilon: total_energy_density = grhd_rho(1+grhd_epsl)*/
 "grhd_vx","grhd_vy","grhd_vz",/* primitive v, measured by an Eulerian observer, 
-                              // from BNSdata v^i defined: 
                               // v^i = u^i/(alpha u^0) + beta^i / alpha
-                              // where u^{mu}=(u^0,u^i) is the 4-velocity of the fluid */
+                              // where u^{mu}=(u^0,u^i) is the 4-velocity of the fluid. */
                          
   0/* --> detemine the last pointer */
 };
