@@ -54,6 +54,12 @@ void bam_EIDdataReader(void)
    "  fill excised BH with data demanding C2 continuity for general S2"
    "none: no filling.");
   
+  AddPar("EIDdateReader_inf_shift","zero",
+   "behavior of shift at infinity."
+   "options: [zero,inspiral]"
+   "o. zero     = for inertial frame."
+   "o. inspiral = for corotating frame.");
+  
   AddPar("EIDdateReader_x_CM","0","elliptica's x_CM of system");
   AddPar("EIDdateReader_y_CM","0","elliptica's y_CM of system");
   AddPar("EIDdateReader_z_CM","0","elliptica's z_CM of system");

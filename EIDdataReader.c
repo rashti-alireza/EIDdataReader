@@ -379,6 +379,7 @@ static void call_elliptica_and_write_fields(tL *const level,char *const coords_f
     fprintf(id_parfile,Pbhns_"fields_file_path = %s\n",fields_file_path);
     fprintf(id_parfile,Pbhns_"fields_name      = %s\n",str);
     fprintf(id_parfile,Pbhns_"filler_method    = %s\n",Gets("EIDdateReader_BHfiller"));
+    fprintf(id_parfile,MODIFY"ADM_B1I_form     = %s\n",Gets("EIDdateReader_inf_shift"));
     fprintf(id_parfile,Pbhns_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,BHNS_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
     fprintf(id_parfile,"\n");
