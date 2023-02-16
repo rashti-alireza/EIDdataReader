@@ -248,7 +248,7 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
     i = Ind("adm_Sx");   enablevar(level, i);
     i = Ind("adm_SSxx"); enablevar(level, i);
     
-    /* amd_rho */
+    /* adm_rho */
     i = Ind("adm_rho"); enablevar(level, i);
   }
   
