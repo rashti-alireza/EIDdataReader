@@ -1,0 +1,106 @@
+# a minimal parameter file to test single (isolated) BHs evolution
+
+physics = adm z4 Gauge EIDdataReader Invariants
+
+#############################################################################
+# initial data
+
+EIDdataReader_exe      = ?
+EIDdataReader_datadir  = ?
+EIDdataReader_physics  = SBH
+EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
+
+############################################################################
+# checkpointing
+
+checkpoint               = yes
+checkpoint_dt_hours      = 10
+checkpoint_dt_hours_quit = 198
+checkpoint_variables     = all
+ExitIfNAN                = yes
+
+############################################################################
+# basic setup
+
+order_centered              = 4
+order_advection             = 4
+advection_lopsided6         = 2
+advection_lopsided          = 1
+
+order_dissipation           = 6 #4
+dissipation_factor          = 0.5 #0.1
+dissipation_factor_level0   = 0.5
+
+bampi_timer_on              = yes
+bampi_lowlatency            = yes
+bampi_nghosts               = 6
+order_RP                    = 6
+amr_nbuffer                 = 6
+
+amr_npunctures              = 1
+amr_lmax                    = 10  # BH
+nxyz                        = 128*2
+amr_move_lcube              = 7
+amr_move_nxyz               = 128  
+dxyz                        = 19.86/128.*1024  ##0.15515625-->158.88
+amr_bo_dxmax                = 2.4/128.* 64.
+
+amr                         = bo newfmr move
+amr_fmr                     = nestedboxes
+grid                        = box bitant
+
+#############################################################################
+# evolution
+
+evolution_method        = rk
+evolution_method_rk     = rk4g
+
+dtfac                   = 0.25
+finaltime 		= 20000
+
+z4_normalizedetg      = yes
+z4_subtractA          = yes
+z4_chi_div_floor      = 1e-5
+
+z4_initial_lapse      = one #oochi05 one donothing
+z4_initial_shift      = zero
+z4_lapse              = 1+log withshift
+z4_shift              = withoutB withShiftadv
+z4_shiftalphapower    = 0.0
+z4_shiftdriver        = 2.0/9.6
+z4_shiftgammacoeff    = 1.0
+
+z4_kappa1                   = 0.045
+z4_kappa2                   = 0.0
+
+punctures_lapse         = psiBL^(-2)
+
+
+#############################################################################
+# output
+
+#0doutiter              = 1
+0douttime               = 19.86/128.*64. #9.93
+0doutput                = alpha adm_rho ham momx momy momz
+
+#1doutiter              = 1
+1douttime               = 19.86/128.*64. #9.93
+1doutput                = alpha betax betay betaz ham momx momy momz bssn_K bssn_chi adm_K0 adm_Kxx adm_Kxy adm_Kxz adm_Kyy adm_Kyz adm_Kzz  adm_gxx adm_gxy adm_gxz adm_gyy adm_gyz adm_gzz  bssn_Kxx bssn_Kxy bssn_Kxz bssn_Kyy bssn_Kyz bssn_Kzz  bssn_gxx bssn_gxy bssn_gxz bssn_gyy bssn_gyz bssn_gzz
+1doutputall             = yes
+
+#2doutiter              = 1
+2douttime               = 19.86/128.*64.*4. #9.93 * 4
+2doutput                = alpha ham momx momy momz
+#2doutput                = alpha betax bssn_chi bssn_K ham momx rpsi4 ipsi4
+2dformat                = vtk binary float
+2doutinterpolate        = yes
+
+#############################################################################
+# boundary
+
+boundary                = background radcentered 
+
+############################################################################
+# gauge
+Gauge                   = moving_puncture
+############################################################################
