@@ -1,6 +1,7 @@
 /* Alireza Rashti Feb 2020 */
 
 #include "bam.h"
+#include "elliptica_id_reader_lib.h"
 #include "bam_EIDdataReader.h"
 
 #define STR_LEN_MAX (1000)
