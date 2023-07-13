@@ -82,10 +82,7 @@ if (x){\
   printf("%-30s = %+g\n",x,(y));
 
 int EIDdataReader(tL *const level);
-int EIDpreGrid(tL *const level);
-//static void call_elliptica_and_write_fields(tL *const level,char *const coords_file_path, char *const fields_file_path);
-//static void write_coords(tL *const level,char *const coords_file_path);
-static void populate_fields_for_bam(tL *const level, char *const fields_file_path);
+static void populate_fields_for_bam(tL *const level, char *const checkpoint_dir);
 
 
 

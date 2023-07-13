@@ -12,8 +12,6 @@ void bam_EIDdataReader(void)
   if(!Getv("physics", "EIDdataReader")) return;
   
   /* functions */
-  AddFun(PRE_GRID, EIDpreGrid,
-      "set some pars important for making the grid");
   AddFun(INITIALDATA_SET, EIDdataReader,
       "Import initial data made by Elliptica");
   
