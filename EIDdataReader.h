@@ -82,7 +82,7 @@ if (x){\
   printf("%-30s = %+g\n",x,(y));
 
 int EIDdataReader(tL *const level);
-static void populate_fields_for_bam(tL *const level, char *const checkpoint_dir);
+
 
 
 
