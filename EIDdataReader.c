@@ -22,11 +22,10 @@
 /* algorithm:
 // ==========
 // at each level:
-// 1. write grid points in Cartesian coords. (x,y,z) into a file
-// 2. call Elliptica and read this file composed of (x,y,z) coords.
-// 3. interpolate the required fields by bam at (x,y,z)
-// 4. write the values of interpolated fields into another file.
-// 5. read this file by bam to initializing the fields. 
+// 1. write the grid points in Cartesian coords., (x,y,z), into 1D arrays
+// 2. specify the required fields to be interpolated for bam
+// 3. call Elliptica to interpolate the fields on these (x,y,z)'s
+// 4. read the interpolated values and populate Bam's fields
 // ->return value: 0 */
 int EIDdataReader(tL *const level)
 {
