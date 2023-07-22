@@ -4,9 +4,16 @@
 
 ## an example parameter file to show how to set parameters needed
 ## by Elliptica to import the initial data for black hole neutron star
-## binary systems.
+## binary systems. search for ??? to set.
 
 physics = adm z4 Gauge matter eos grhd EIDdataReader Invariants ADM_mass AHmod hydroanalysis
+
+############################################################################
+# initial data
+
+EIDdataReader_checkpoint = ??? # /path/to/ELLIPTICA/checkpoint/file
+EIDdataReader_physics    = BHNS
+EIDdataReader_BHfiller   = ChebTn_Ylm_perfect_s2 ## if need BH filler in Elliptica
 
 
 ############################################################################
@@ -24,13 +31,6 @@ amr_bo_dxmax                = 0.249*8
 Invariants_output_time      = 0.249*8  #around 2 
 AHmod_time                  = 0.249*8  #around 2
 
-############################################################################
-# initial data
-
-EIDdataReader_exe        = # /path/to/elliptica/bin/Exe/elliptica
-EIDdataReader_checkpoint = # /path/to/checkpoint/file
-EIDdataReader_physics    = BHNS
-EIDdataReader_BHfiller   = ChebTn_Ylm_perfect_s2 ## if need BH filler in Elliptica
 
 ############################################################################
 # checkpointing

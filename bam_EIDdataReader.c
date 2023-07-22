@@ -19,8 +19,6 @@ void bam_EIDdataReader(void)
   /* parameters */
   printf("Adding EID initial data reader: read data from Elliptica\n");
 
-  AddPar("EIDdataReader_exe", "./elliptica", 
-         "location of elliptica executable");
   AddPar("EIDdataReader_checkpoint", "",
          "/full/path/to/elliptica/checkpoint/file");
   

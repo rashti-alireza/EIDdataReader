@@ -63,17 +63,19 @@ static const char *const import_fields_no_matter[] = /* matter excluded */
 int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
+  int i; // dummy index the for loop
   
-  const char *checkpnt  = Gets("EIDdataReader_checkpoint");
-
   /* initialize ID Reader */ 
-  Elliptica_ID_Reader_T *idr = elliptica_id_reader_init(checkpnt_path,"generic");
+  Elliptica_ID_Reader_T *idr = 
+    elliptica_id_reader_init(Gets("EIDdataReader_checkpoint"),"generic");
+  
+  // specify interpolation points
   idr->npoints  = level->npoints;
   idr->x_coords = level->v[Ind("x")];
   idr->y_coords = level->v[Ind("y")];
   idr->z_coords = level->v[Ind("z")];
-
-  /* read fields content */
+  
+  /* specify interpolating fields */
   if(Getv("EIDdataReader_physics","BHNS"))
   {
     idr->ifields = "alpha,betax,betay,betaz,"
@@ -108,6 +110,7 @@ int EIDdataReader(tL *const level)
   printf("~> Populating BAM variables based on initial data ...\n");
   fflush(stdout);
   
+  // populate fields
   if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS") )
   {
     const int ialpha = idr->indx("alpha");
