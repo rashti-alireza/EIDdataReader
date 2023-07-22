@@ -244,3 +244,68 @@ int EIDdataReader(tL *const level)
 
   return 0;
 }
+
+/* set some params that important for making the grid */
+int EIDpreGrid(tL *const level)
+{
+  /* set pre grid parameters */
+  printf("Setting some parameters relevant for setting up bam's grid:\n");
+  
+  /* initialize ID Reader */ 
+  Elliptica_ID_Reader_T *idr = 
+    elliptica_id_reader_init(Gets("EIDdataReader_checkpoint"),"generic");
+  
+  if(Getv("EIDdataReader_physics","BHNS"))
+  {
+    const double sys_cm[3] = {
+      idr->get_param_dbl("BHNS_x_CM",idr),
+      idr->get_param_dbl("BHNS_y_CM",idr),
+      idr->get_param_dbl("BHNS_z_CM",idr)
+    };
+    
+    const double ns_c[3] = {
+      idr->get_param_dbl("NS_center_x",idr),
+      idr->get_param_dbl("NS_center_y",idr),
+      idr->get_param_dbl("NS_center_z",idr)
+    };
+
+    const double bh_c[3] = {
+      idr->get_param_dbl("BH_center_x",idr),
+      idr->get_param_dbl("BH_center_y",idr),
+      idr->get_param_dbl("BH_center_z",idr)
+    };
+
+    const double ns_m = idr->get_param_dbl("NS_baryonic_mass_current",idr);
+    const double bh_m = idr->get_param_dbl("BH_irreducible_mass_current",idr);
+    
+    // set pre grid params:
+
+    MySetd("mass1", ns_m);
+    MySetd("mass2", bh_m);
+    // note: r_elliptica = r_CM + r_bam 
+    //       = > r_bam = r_elliptica - r_CM. */
+    MySetd("px1", ns_c[0]-sys_cm[0]);
+    MySetd("py1", ns_c[1]-sys_cm[1]);
+    MySetd("pz1", ns_c[2]-sys_cm[2]);
+    MySetd("px2", bh_c[0]-sys_cm[0]);
+    MySetd("py2", bh_c[1]-sys_cm[1]);
+    MySetd("pz2", bh_c[2]-sys_cm[2]);
+    
+    /* for the bam BHfiller */
+    if (1)
+    {
+      /* note: the notation different here and object 1 is bh. */
+      MySetd("bhmass1",bh_m);
+      MySetd("bhmass2",0.);
+      MySetd("bhx1", Getd("px2"));
+      MySetd("bhy1", Getd("py2"));
+      MySetd("bhz1", Getd("pz2"));
+    }
+  }
+  
+   
+  // free workspace
+  elliptica_id_reader_free(idr);
+  
+  return 0;
+}

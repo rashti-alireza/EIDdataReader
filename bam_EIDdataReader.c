@@ -4,8 +4,7 @@
 #include "bam_EIDdataReader.h"
 
 int EIDdataReader(tL *const level);
-
-#define STR_LEN_MAX (1000)
+int EIDpreGrid(tL *const level);
 
 /* get binary black hole neutron star initial data into bam */
 void bam_EIDdataReader(void) 
@@ -13,6 +12,8 @@ void bam_EIDdataReader(void)
   if(!Getv("physics", "EIDdataReader")) return;
   
   /* functions */
+  AddFun(PRE_GRID, EIDpreGrid,
+      "set some params that are important for making the grid");
   AddFun(INITIALDATA_SET, EIDdataReader,
       "Import initial data made by Elliptica");
   
