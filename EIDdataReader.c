@@ -31,24 +31,7 @@ int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
   
-  const char *const outdir = Gets("outdir");
-  //const int rank = bampi_rank();
-  //char coords_file_path[STR_LEN_MAX] = {'\0'};
-  //char fields_file_path[STR_LEN_MAX] = {'\0'};
-  char checkpt_path[STR_LEN_MAX];
-  sprintf(checkpt_path, "%s/%s", Gets("EIDdataReader_datadir"), "checkpoint.dat");
-  const char *checkpnt_path  = checkpt_path;
-  int i;
-
-  /* read fields from the file made by Elliptica */
-  FILE *file = 0;
-  file = fopen(checkpnt_path,"r");
-  if(!file) 
-    errorexits("could not open %s", checkpnt_path);
-
-  //const double *const x = level->v[Ind("x")];
-  //const double *const y = level->v[Ind("y")];
-  //const double *const z = level->v[Ind("z")];
+  const char *checkpnt  = Gets("EIDdataReader_checkpoint");
 
   /* initialize ID Reader */ 
   Elliptica_ID_Reader_T *idr = elliptica_id_reader_init(checkpnt_path,"generic");
@@ -58,61 +41,152 @@ int EIDdataReader(tL *const level)
   idr->z_coords = level->v[Ind("z")];
 
   /* read fields content */
-  if(Getv("EIDdataReader_physics",BHNS))
+  if(Getv("EIDdataReader_physics","BHNS"))
   {
-    idr->ifields  = "alpha,betax,betay,betaz,adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz,grhd_rho,grhd_p,grhd_epsl,grhd_vx,grhd_vy,grhd_vz";
-    idr->set_param("BHNS_filler_method","ChebTn_Ylm_perfect_s2",idr);
+    idr->ifields = "alpha,betax,betay,betaz,"
+                   "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
+                   "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz,"
+                   "grhd_rho,grhd_p,grhd_epsl,grhd_vx,grhd_vy,grhd_vz";
+    idr->set_param("BHNS_filler_method",Gets("EIDdataReader_BHfiller"),idr);
     idr->set_param("ADM_B1I_form","zero",idr); 
   }
-  else if(Getv("EIDdataReader_physics",SBH))
+  else if(Getv("EIDdataReader_physics","NSNS"))
   {
-    idr->ifields  = "alpha,betax,betay,betaz,adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz";
+    idr->ifields = "alpha,betax,betay,betaz,"
+                   "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
+                   "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz,"
+                   "grhd_rho,grhd_p,grhd_epsl,grhd_vx,grhd_vy,grhd_vz";
+    idr->set_param("ADM_B1I_form","zero",idr); 
+  }
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    idr->ifields = "alpha,betax,betay,betaz,"
+                   "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
+                   "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz";
   }
   else
+  {
     errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
   
   /* interpolate */
   elliptica_id_reader_interpolate(idr);
   
   printf("~> Populating BAM variables based on initial data ...\n");
   fflush(stdout);
-  forallpoints(level, i)
-    {
-      Ptr(level, "alpha")[i] = idr->field[idr->indx("alpha")][i];
-      Ptr(level, "betax")[i] = idr->field[idr->indx("betax")][i];
-      Ptr(level, "betay")[i] = idr->field[idr->indx("betay")][i];
-      Ptr(level, "betaz")[i] = idr->field[idr->indx("betaz")][i];
-
-      Ptr(level, "adm_gxx")[i] = idr->field[idr->indx("adm_gxx")][i];
-      Ptr(level, "adm_gxy")[i] = idr->field[idr->indx("adm_gxx")][i];
-      Ptr(level, "adm_gxz")[i] = idr->field[idr->indx("adm_gxx")][i];
-      Ptr(level, "adm_gyy")[i] = idr->field[idr->indx("adm_gxx")][i];
-      Ptr(level, "adm_gyz")[i] = idr->field[idr->indx("adm_gxx")][i];
-      Ptr(level, "adm_gzz")[i] = idr->field[idr->indx("adm_gxx")][i];
-
-      Ptr(level, "adm_Kxx")[i] = idr->field[idr->indx("adm_Kxx")][i];
-      Ptr(level, "adm_Kxy")[i] = idr->field[idr->indx("adm_Kxx")][i];
-      Ptr(level, "adm_Kxz")[i] = idr->field[idr->indx("adm_Kxx")][i];
-      Ptr(level, "adm_Kyy")[i] = idr->field[idr->indx("adm_Kxx")][i];
-      Ptr(level, "adm_Kyz")[i] = idr->field[idr->indx("adm_Kxx")][i];
-      Ptr(level, "adm_Kzz")[i] = idr->field[idr->indx("adm_Kxx")][i];
-
-      if(Getv("EIDdataReader_physics",BHNS)){
-        Ptr(level, "grhd_rho")[i] = idr->field[idr->indx("grhd_rho")][i];
-        Ptr(level, "grhd_epsl")[i] = idr->field[idr->indx("grhd_epsl")][i];
-        Ptr(level, "grhd_p")[i] = idr->field[idr->indx("grhd_p")][i];
-        Ptr(level, "grhd_vx")[i] = idr->field[idr->indx("grhd_vx")][i];
-        Ptr(level, "grhd_vy")[i] = idr->field[idr->indx("grhd_vy")][i];
-        Ptr(level, "grhd_vz")[i] = idr->field[idr->indx("grhd_vz")][i];
-      }
-    }
-
   
+  if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS") )
+  {
+    const int ialpha = idr->indx("alpha");
+    const int ibetax = idr->indx("betax");
+    const int ibetay = idr->indx("betay");
+    const int ibetaz = idr->indx("betaz");
+
+    const int iadm_gxx   = idr->indx("adm_gxx");
+    const int iadm_gxy   = idr->indx("adm_gxy");
+    const int iadm_gxz   = idr->indx("adm_gxz");
+    const int iadm_gyy   = idr->indx("adm_gyy");
+    const int iadm_gyz   = idr->indx("adm_gyz");
+    const int iadm_gzz   = idr->indx("adm_gzz");
+
+    const int iadm_Kxx   = idr->indx("adm_Kxx");
+    const int iadm_Kxy   = idr->indx("adm_Kxy");
+    const int iadm_Kxz   = idr->indx("adm_Kxz");
+    const int iadm_Kyy   = idr->indx("adm_Kyy");
+    const int iadm_Kyz   = idr->indx("adm_Kyz");
+    const int iadm_Kzz   = idr->indx("adm_Kzz");
+
+    const int igrhd_rho   = idr->indx("grhd_rho");
+    const int igrhd_epsl  = idr->indx("grhd_epsl");
+    const int igrhd_p     = idr->indx("grhd_p");
+    const int igrhd_vx    = idr->indx("grhd_vx");
+    const int igrhd_vy    = idr->indx("grhd_vy");
+    const int igrhd_vz    = idr->indx("grhd_vz");
+
+    forallpoints(level, i)
+    {
+      Ptr(level, "alpha")[i]   = idr->field[ialpha][i];
+      Ptr(level, "betax")[i]   = idr->field[ibetax][i];
+      Ptr(level, "betay")[i]   = idr->field[ibetay][i];
+      Ptr(level, "betaz")[i]   = idr->field[ibetaz][i];
+
+      Ptr(level, "adm_gxx")[i] = idr->field[iadm_gxx][i];
+      Ptr(level, "adm_gxy")[i] = idr->field[iadm_gxy][i];
+      Ptr(level, "adm_gxz")[i] = idr->field[iadm_gxz][i];
+      Ptr(level, "adm_gyy")[i] = idr->field[iadm_gyy][i];
+      Ptr(level, "adm_gyz")[i] = idr->field[iadm_gyz][i];
+      Ptr(level, "adm_gzz")[i] = idr->field[iadm_gzz][i];
+
+      Ptr(level, "adm_Kxx")[i] = idr->field[iadm_Kxx][i];
+      Ptr(level, "adm_Kxy")[i] = idr->field[iadm_Kxy][i];
+      Ptr(level, "adm_Kxz")[i] = idr->field[iadm_Kxz][i];
+      Ptr(level, "adm_Kyy")[i] = idr->field[iadm_Kyy][i];
+      Ptr(level, "adm_Kyz")[i] = idr->field[iadm_Kyz][i];
+      Ptr(level, "adm_Kzz")[i] = idr->field[iadm_Kzz][i];
+
+      Ptr(level, "grhd_rho")[i]  = idr->field[igrhd_rho][i];
+      Ptr(level, "grhd_epsl")[i] = idr->field[igrhd_epsl][i];
+      Ptr(level, "grhd_p")[i]    = idr->field[igrhd_p][i];
+      Ptr(level, "grhd_vx")[i]   = idr->field[igrhd_vx][i];
+      Ptr(level, "grhd_vy")[i]   = idr->field[igrhd_vy][i];
+      Ptr(level, "grhd_vz")[i]   = idr->field[igrhd_vz][i];
+    }
+  }
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    const int ialpha = idr->indx("alpha");
+    const int ibetax = idr->indx("betax");
+    const int ibetay = idr->indx("betay");
+    const int ibetaz = idr->indx("betaz");
+
+    const int iadm_gxx   = idr->indx("adm_gxx");
+    const int iadm_gxy   = idr->indx("adm_gxy");
+    const int iadm_gxz   = idr->indx("adm_gxz");
+    const int iadm_gyy   = idr->indx("adm_gyy");
+    const int iadm_gyz   = idr->indx("adm_gyz");
+    const int iadm_gzz   = idr->indx("adm_gzz");
+
+    const int iadm_Kxx   = idr->indx("adm_Kxx");
+    const int iadm_Kxy   = idr->indx("adm_Kxy");
+    const int iadm_Kxz   = idr->indx("adm_Kxz");
+    const int iadm_Kyy   = idr->indx("adm_Kyy");
+    const int iadm_Kyz   = idr->indx("adm_Kyz");
+    const int iadm_Kzz   = idr->indx("adm_Kzz");
+
+    forallpoints(level, i)
+    {
+      Ptr(level, "alpha")[i]   = idr->field[ialpha][i];
+      Ptr(level, "betax")[i]   = idr->field[ibetax][i];
+      Ptr(level, "betay")[i]   = idr->field[ibetay][i];
+      Ptr(level, "betaz")[i]   = idr->field[ibetaz][i];
+
+      Ptr(level, "adm_gxx")[i] = idr->field[iadm_gxx][i];
+      Ptr(level, "adm_gxy")[i] = idr->field[iadm_gxy][i];
+      Ptr(level, "adm_gxz")[i] = idr->field[iadm_gxz][i];
+      Ptr(level, "adm_gyy")[i] = idr->field[iadm_gyy][i];
+      Ptr(level, "adm_gyz")[i] = idr->field[iadm_gyz][i];
+      Ptr(level, "adm_gzz")[i] = idr->field[iadm_gzz][i];
+
+      Ptr(level, "adm_Kxx")[i] = idr->field[iadm_Kxx][i];
+      Ptr(level, "adm_Kxy")[i] = idr->field[iadm_Kxy][i];
+      Ptr(level, "adm_Kxz")[i] = idr->field[iadm_Kxz][i];
+      Ptr(level, "adm_Kyy")[i] = idr->field[iadm_Kyy][i];
+      Ptr(level, "adm_Kyz")[i] = idr->field[iadm_Kyz][i];
+      Ptr(level, "adm_Kzz")[i] = idr->field[iadm_Kzz][i];
+    }
+  }
+  else
+  {
+    errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
+
   printf("~> Populating BAM variables based on initial data --> Done.\n");
   fflush(stdout);
   
+  // free workspace
   elliptica_id_reader_free(idr);
   printf("} Importing initial data from Elliptica --> Done.\n");
   fflush(stdout);
+
   return 0;
 }
