@@ -27,10 +27,10 @@ AHmod_time                  = 0.249*8  #around 2
 ############################################################################
 # initial data
 
-EIDdataReader_exe      = ?
-EIDdataReader_datadir  = ?
-EIDdataReader_physics  = BHNS
-EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
+EIDdataReader_exe        = # /path/to/elliptica/bin/Exe/elliptica
+EIDdataReader_checkpoint = # /path/to/checkpoint/file
+EIDdataReader_physics    = BHNS
+EIDdataReader_BHfiller   = ChebTn_Ylm_perfect_s2 ## if need BH filler in Elliptica
 
 ############################################################################
 # checkpointing
