@@ -302,7 +302,83 @@ int EIDpreGrid(tL *const level)
       MySetd("bhz1", Getd("pz2"));
     }
   }
-  
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    const double sys_cm[3] = {
+      idr->get_param_dbl("SBH_x_CM",idr),
+      idr->get_param_dbl("SBH_y_CM",idr),
+      idr->get_param_dbl("SBH_z_CM",idr)
+    };
+    
+    const double bh_c[3] = {
+      idr->get_param_dbl("BH_center_x",idr),
+      idr->get_param_dbl("BH_center_y",idr),
+      idr->get_param_dbl("BH_center_z",idr)
+    };
+
+    const double bh_m = idr->get_param_dbl("BH_irreducible_mass_current",idr);
+    
+    // set pre grid params:
+
+    MySetd("mass1", bh_m);
+    MySetd("mass2", 0.);
+    // note: r_elliptica = r_CM + r_bam 
+    //       = > r_bam = r_elliptica - r_CM. */
+    MySetd("px1", bh_c[0]-sys_cm[0]);
+    MySetd("py1", bh_c[1]-sys_cm[1]);
+    MySetd("pz1", bh_c[2]-sys_cm[2]);
+    
+    /* for the bam BHfiller */
+    if (1)
+    {
+      MySetd("bhmass1",bh_m);
+      MySetd("bhmass2",0.);
+      MySetd("bhx1", Getd("px1"));
+      MySetd("bhy1", Getd("py1"));
+      MySetd("bhz1", Getd("pz1"));
+    }
+  }
+  else if(Getv("EIDdataReader_physics","NSNS"))
+  {
+    const double sys_cm[3] = {
+      idr->get_param_dbl("NSNS_x_CM",idr),
+      idr->get_param_dbl("NSNS_y_CM",idr),
+      idr->get_param_dbl("NSNS_z_CM",idr)
+    };
+    
+    const double ns1_c[3] = {
+      idr->get_param_dbl("NS1_center_x",idr),
+      idr->get_param_dbl("NS1_center_y",idr),
+      idr->get_param_dbl("NS1_center_z",idr)
+    };
+
+    const double ns2_c[3] = {
+      idr->get_param_dbl("NS2_center_x",idr),
+      idr->get_param_dbl("NS2_center_y",idr),
+      idr->get_param_dbl("NS2_center_z",idr)
+    };
+
+    const double ns1_m = idr->get_param_dbl("NS1_baryonic_mass_current",idr);
+    const double ns2_m = idr->get_param_dbl("NS2_baryonic_mass_current",idr);
+    
+    // set pre grid params:
+
+    MySetd("mass1", ns1_m);
+    MySetd("mass2", ns2_m);
+    // note: r_elliptica = r_CM + r_bam 
+    //       = > r_bam = r_elliptica - r_CM. */
+    MySetd("px1", ns1_c[0]-sys_cm[0]);
+    MySetd("py1", ns1_c[1]-sys_cm[1]);
+    MySetd("pz1", ns1_c[2]-sys_cm[2]);
+    MySetd("px2", ns2_c[0]-sys_cm[0]);
+    MySetd("py2", ns2_c[1]-sys_cm[1]);
+    MySetd("pz2", ns2_c[2]-sys_cm[2]);
+    
+  }
+  else
+  {
+    errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
    
   // free workspace
   elliptica_id_reader_free(idr);
