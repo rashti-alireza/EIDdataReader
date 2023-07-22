@@ -1,6 +1,7 @@
 /* Alireza Rashti Feb 2020 */
 
 #include "bam.h"
+#include "bam_EIDdataReader.h"
 
 int EIDdataReader(tL *const level);
 

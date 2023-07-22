@@ -2,6 +2,7 @@
 
 #include "bam.h"
 #include "elliptica_id_reader_lib.h"
+#include "EIDdataReader.h"
 
 /* initialize the following fields imported using the initial data.
 // NOTE: in Elliptica fields are the same as variables in BAM.
