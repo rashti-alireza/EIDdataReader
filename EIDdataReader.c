@@ -17,6 +17,39 @@
 // we ignore omega *r part of shifts vector and transform other fields
 // consequently.  */
 
+static const char *const import_fields_with_matter[] = /* matter included */
+{
+"alpha",/* lapse: alpha */
+"betax","betay","betaz",/* shift: beta^i */
+"adm_gxx","adm_gxy","adm_gxz",/* metric: g_ij */
+"adm_gyy","adm_gyz","adm_gzz",/* metric: g_ij */
+"adm_Kxx","adm_Kxy","adm_Kxz",/* extrinsic curvature: K_ij */
+"adm_Kyy","adm_Kyz","adm_Kzz",/* extrinsic curvature: K_ij */
+
+/* matter part */
+"grhd_rho",/* primitive rho */
+"grhd_p",/* primitive p */
+"grhd_epsl",/* primitive epsilon: total_energy_density = grhd_rho(1+grhd_epsl)*/
+"grhd_vx","grhd_vy","grhd_vz",/* primitive v, measured by an Eulerian observer, 
+                              // v^i = u^i/(alpha u^0) + beta^i / alpha
+                              // where u^{mu}=(u^0,u^i) is the 4-velocity of the fluid. */
+
+0/* --> detemine the last pointer */
+};
+
+static const char *const import_fields_no_matter[] = /* matter excluded */
+{
+"alpha",/* lapse: alpha */
+"betax","betay","betaz",/* shift: beta^i */
+"adm_gxx","adm_gxy","adm_gxz",/* metric: g_ij */
+"adm_gyy","adm_gyz","adm_gzz",/* metric: g_ij */
+"adm_Kxx","adm_Kxy","adm_Kxz",/* extrinsic curvature: K_ij */
+"adm_Kyy","adm_Kyz","adm_Kzz",/* extrinsic curvature: K_ij */
+
+0/* --> detemine the last pointer */
+};
+
+
 
 /* algorithm:
 // ==========
@@ -102,6 +135,15 @@ int EIDdataReader(tL *const level)
     const int igrhd_vy    = idr->indx("grhd_vy");
     const int igrhd_vz    = idr->indx("grhd_vz");
 
+    int fld = 0;
+    while(import_fields_with_matter[fld])
+    {
+     /* enable */   
+      int comp = Ind(import_fields_with_matter[fld]);
+      enablevarcomp(level, comp);
+      fld++;
+    }
+
     forallpoints(level, i)
     {
       Ptr(level, "alpha")[i]   = idr->field[ialpha][i];
@@ -151,6 +193,15 @@ int EIDdataReader(tL *const level)
     const int iadm_Kyy   = idr->indx("adm_Kyy");
     const int iadm_Kyz   = idr->indx("adm_Kyz");
     const int iadm_Kzz   = idr->indx("adm_Kzz");
+
+    int fld = 0;
+    while(import_fields_no_matter[fld])
+    {
+     /* enable */   
+      int comp = Ind(import_fields_no_matter[fld]);
+      enablevarcomp(level, comp);
+      fld++;
+    }
 
     forallpoints(level, i)
     {
