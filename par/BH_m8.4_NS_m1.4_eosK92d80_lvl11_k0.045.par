@@ -1,0 +1,244 @@
+###################################
+## Elliptica initial data reader ##
+###################################
+## parameter file for a production run of BHNS simulation, used Elliptica's ID
+## search for ??? to set.
+
+physics = adm z4 Gauge matter eos grhd EIDdataReader Invariants AHmod hydroanalysis ADM_mass #BHfiller
+
+#############################################################################
+# initial data
+
+EIDdataReader_physics  = BHNS
+EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
+
+## new interface
+EIDdataReader_checkpoint = ??? # /path/to/ELLIPTICA/checkpoint/file
+
+## up to EIDdataReader version v1.1 use:
+#EIDdataReader_exe      = ??? # /path/to/elliptica/exe
+#EIDdataReader_datadir  = ??? # /path/to/checkpoint/file/directory
+
+
+# BHfiller
+#BHfiller_verbose        = no
+#BHfiller_time           = 0
+#BHfiller_r_fill1        = ?
+#BHfiller_interpolationstencil_radius = 1.
+
+############################################################################
+# eos
+
+eos_K		       = 92.12  #100
+eos                    = poly #ideal
+eos_Gamma	       = 2
+
+
+############################################################################
+# checkpointing
+
+checkpoint               = yes
+checkpoint_dt_hours      = 10
+checkpoint_dt_hours_quit = 198
+checkpoint_variables     = all
+
+ExitIfNAN                = yes
+
+############################################################################
+# basic setup
+
+order_centered              = 4
+order_advection             = 4
+advection_lopsided6         = 2
+advection_lopsided          = 1
+
+order_dissipation           = 6 #4
+dissipation_factor          = 0.5 #0.1
+dissipation_factor_level0   = 0.5
+
+bampi_timer_on              = yes
+bampi_lowlatency            = yes
+bampi_nghosts               = 6
+order_RP                    = 6
+amr_nbuffer                 = 6
+
+amr_npunctures              = 1
+amr_lmax                    = 10  # BH
+##amr_lmax2                   = 5 # NS
+nxyz                        = 128*2
+amr_move_lcube              = 7
+amr_move_nxyz               = 128  
+dxyz                        = 19.86/128.*1024  ##0.15515625-->158.88
+amr_bo_dxmax                = 2.4/128.* 64.
+
+amr                         = bo newfmr move
+amr_fmr                     = nestedboxes
+grid                        = box bitant
+
+############################################################################
+# hydro
+
+hrsc_nghosts		    = 4
+hrsc_rec		    = WENOZ
+hrsc_TVD_limiter	    = MC2
+hrsc_rec_metric		    = LAG6
+hrsc_flux		    = LLF
+
+grhd_C2P		    = p_root
+grhd_C2P_NewtonRaphsonTR    = 1e-9
+grhd_C2P_NewtonRaphsonNR    = 100
+
+grhd_vmax		    = 0.999
+grhd_Wlor_max		    = 1e5
+
+###grhd_use_atmosphere	    = yes
+grhd_use_atmosphere	    = ColdStatic
+grhd_atm_factor		    = 100
+grhd_atm_level		    = 1e-10
+
+grhd_use_atmosphere_mask    = yes
+grhd_use_atmosphere_prerhs  = yes
+grhd_use_atmosphere_postrhs = no
+
+##add new 04.04.20
+matter_interpolate_order  = 4
+matter_interpolate_scheme_restriction  = linear
+matter_interpolate_scheme_prolongation = linear
+conservative_amr          = yes
+camr_treshold             = 1e20
+
+#############################################################################
+# evolution
+
+evolution_method        = rk
+evolution_method_rk     = rk4g
+
+dtfac                   = 0.25
+finaltime 		= 20000
+
+z4_normalizedetg      = yes
+z4_subtractA          = yes
+z4_chi_div_floor      = 1e-5
+
+z4_initial_lapse      = one #oochi05 one donothing
+z4_initial_shift      = zero
+z4_lapse              = 1+log withshift
+z4_shift              = withoutB withShiftadv
+z4_shiftalphapower    = 0.0
+z4_shiftdriver        = 2.0/9.6
+z4_shiftgammacoeff    = 1.0
+
+z4_kappa1                   = 0.045
+z4_kappa2                   = 0.0
+
+punctures_lapse         = psiBL^(-2)
+
+
+#############################################################################
+# output
+
+#0doutiter              = 1
+0douttime               = 19.86/128.*64. #9.93
+0doutput                = alpha adm_rho ham momx momy momz grhd_rho grhd_epsl grhd_D hydroa_Dh hydroa_Du hydroa_Db hydroa_vorx hydroa_vory hydroa_vorz
+
+#1doutiter              = 1
+1douttime               = 19.86/128.*64. #9.93
+1doutput                = alpha betax betay betaz ham momx momy momz grhd_rho bssn_K bssn_chi adm_K0 adm_Kxx adm_Kxy adm_Kxz adm_Kyy adm_Kyz adm_Kzz  adm_gxx adm_gxy adm_gxz adm_gyy adm_gyz adm_gzz  bssn_Kxx bssn_Kxy bssn_Kxz bssn_Kyy bssn_Kyz bssn_Kzz  bssn_gxx bssn_gxy bssn_gxz bssn_gyy bssn_gyz bssn_gzz
+1doutinterpolate        = yes
+1doutputall             = yes
+
+#2doutiter              = 1
+2douttime               = 19.86/128.*64.*4. #9.93 * 4
+2doutput                = alpha grhd_rho ham momx momy momz
+#2doutput                = alpha betax bssn_chi bssn_K ham momx rpsi4 ipsi4 grhd_rho grhd_epsl grhd_vx grhd_v2 grhd_D grhd_Sx grhd_Tau hydroa_Dh hydroa_Du hydroa_Db hydroa_vorx hydroa_vory
+2dformat                = vtk binary float
+2doutinterpolate        = yes
+
+
+# For now the string for the 2doutputr parameter is not used, just make
+# sure, it is non-empty!
+#2doutputr               = sphere_data
+
+
+#############################################################################
+# boundary
+
+boundary                = background radcentered 
+
+############################################################################
+# gauge
+
+Gauge                   = moving_puncture
+
+moving_puncture_track_method = extint
+moving_puncture_fixz  = none
+
+compute_moving_puncture_distance = line
+compute_moving_puncture_distance_method = AHsimpleNSBH
+
+#######################################################
+# AHmod
+
+AHmod_verbose     = yes
+
+AHmod_ntheta      = 100
+AHmod_nphi        = 100
+
+AHmod_nhorizons   = 1
+AHmod_searchMTS   = 1 0.0  9000.0  1
+AHmod_uselast     = yes
+AHmod_initial_guess_expand = 1.0
+##AHmod_LevelOffset = 1 #outdated
+AHmod_UseOptimalLevel = no
+
+AHmod_flow_iter   = 5000
+AHmod_mass_tol    = 5.0e-06
+AHmod_hmean_tol   = 1000.0
+
+AHmod_time        = 19.86/128.*64 *2  #9.93 * 2
+
+#AHmod_shrinking           = 2.0
+AHmod_interpolation_order = 6
+AHmod_output              = yes
+AHmod_output_xyt          = no
+AHmod_output_lm           = no
+
+#############################################################################
+# invariants
+
+ntheta                      = 47
+nphi                        = 46
+invariants_compute_modes    = yes
+invariants_modes_r          = 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500 2000 2500 3000 3500 4000 4500 5000 6000 7000 8000 9000 10000 12000 14000 16000 18000 20000
+invariants_modes_lmin       = 0
+invariants_modes_lmax       = 4
+invariants_energy_r         = 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500 2000 2500 3000 3500 4000 4500 5000 6000 7000 8000 9000 10000 12000 14000 16000 18000 20000
+gauss_codacci_mainardi      = standard
+invariants_order            = 4
+
+invariants_compute_modes_general = no
+mode_lmax			 = 6
+invariants_modes_output    = all
+Invariants_output_time		 = 19.86/128.*64 #9.93
+
+############################################################################
+# hydroanalysis
+
+hydroanalysis_lmin	= 0
+hydroanalysis_lmax	= 6
+
+hydroanalysis_D		= grhd_D
+hydroanalysis_p		= grhd_p
+hydroanalysis_r		= grhd_rho
+hydroanalysis_e		= grhd_epsl
+hydroanalysis_v		= grhd_vx
+
+#############################################################################
+# ADM Mass
+
+ADM_mass_ncircles = 101
+ADM_mass_npoints  = 80	
+ADM_mass_lmin     = 0
+ADM_mass_lmax     = 7
+ADM_mass_r        = 300 400 500 600 700 800 900 1000 1100 1200 1300 1400 1500 2000 2500 3000 3500 4000 4500 5000 6000 7000 8000 9000 10000 12000 14000 16000 18000 20000
+
