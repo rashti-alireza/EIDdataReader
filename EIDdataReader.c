@@ -111,37 +111,68 @@ int EIDdataReader(tL *const level)
   /* interpolate */
   elliptica_id_reader_interpolate(idr);
   
+  // save level indices for a slight optimization (no matter field)
+  // bam's indices
+  const int ibam_alpha = Ind("alpha");
+  const int ibam_betax = Ind("betax");
+  const int ibam_betay = Ind("betay");
+  const int ibam_betaz = Ind("betaz");
+
+  const int ibam_adm_gxx = Ind("adm_gxx");
+  const int ibam_adm_gxy = Ind("adm_gxy");
+  const int ibam_adm_gxz = Ind("adm_gxz");
+  const int ibam_adm_gyy = Ind("adm_gyy");
+  const int ibam_adm_gyz = Ind("adm_gyz");
+  const int ibam_adm_gzz = Ind("adm_gzz");
+  
+  const int ibam_adm_Kxx = Ind("adm_Kxx");
+  const int ibam_adm_Kxy = Ind("adm_Kxy");
+  const int ibam_adm_Kxz = Ind("adm_Kxz");
+  const int ibam_adm_Kyy = Ind("adm_Kyy");
+  const int ibam_adm_Kyz = Ind("adm_Kyz");
+  const int ibam_adm_Kzz = Ind("adm_Kzz");
+
+  // elliptica's indices
+  const int iell_alpha   = idr->indx("alpha");
+  const int iell_betax   = idr->indx("betax");
+  const int iell_betay   = idr->indx("betay");
+  const int iell_betaz   = idr->indx("betaz");
+  
+  const int iell_adm_gxx = idr->indx("adm_gxx");
+  const int iell_adm_gxy = idr->indx("adm_gxy");
+  const int iell_adm_gxz = idr->indx("adm_gxz");
+  const int iell_adm_gyy = idr->indx("adm_gyy");
+  const int iell_adm_gyz = idr->indx("adm_gyz");
+  const int iell_adm_gzz = idr->indx("adm_gzz");
+
+  const int iell_adm_Kxx = idr->indx("adm_Kxx");
+  const int iell_adm_Kxy = idr->indx("adm_Kxy");
+  const int iell_adm_Kxz = idr->indx("adm_Kxz");
+  const int iell_adm_Kyy = idr->indx("adm_Kyy");
+  const int iell_adm_Kyz = idr->indx("adm_Kyz");
+  const int iell_adm_Kzz = idr->indx("adm_Kzz");
+  
   printf("~> Populating BAM variables based on initial data ...\n");
   fflush(stdout);
   
   // populate fields
   if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS") )
   {
-    const int ialpha = idr->indx("alpha");
-    const int ibetax = idr->indx("betax");
-    const int ibetay = idr->indx("betay");
-    const int ibetaz = idr->indx("betaz");
+    // bam's indices
+    const int ibam_grhd_rho  = Ind("grhd_rho");
+    const int ibam_grhd_epsl = Ind("grhd_epsl");
+    const int ibam_grhd_p    = Ind("grhd_p");
+    const int ibam_grhd_vx   = Ind("grhd_vx");
+    const int ibam_grhd_vy   = Ind("grhd_vy");
+    const int ibam_grhd_vz   = Ind("grhd_vz");
 
-    const int iadm_gxx   = idr->indx("adm_gxx");
-    const int iadm_gxy   = idr->indx("adm_gxy");
-    const int iadm_gxz   = idr->indx("adm_gxz");
-    const int iadm_gyy   = idr->indx("adm_gyy");
-    const int iadm_gyz   = idr->indx("adm_gyz");
-    const int iadm_gzz   = idr->indx("adm_gzz");
-
-    const int iadm_Kxx   = idr->indx("adm_Kxx");
-    const int iadm_Kxy   = idr->indx("adm_Kxy");
-    const int iadm_Kxz   = idr->indx("adm_Kxz");
-    const int iadm_Kyy   = idr->indx("adm_Kyy");
-    const int iadm_Kyz   = idr->indx("adm_Kyz");
-    const int iadm_Kzz   = idr->indx("adm_Kzz");
-
-    const int igrhd_rho   = idr->indx("grhd_rho");
-    const int igrhd_epsl  = idr->indx("grhd_epsl");
-    const int igrhd_p     = idr->indx("grhd_p");
-    const int igrhd_vx    = idr->indx("grhd_vx");
-    const int igrhd_vy    = idr->indx("grhd_vy");
-    const int igrhd_vz    = idr->indx("grhd_vz");
+    // elliptica's indices
+    const int iell_grhd_rho  = idr->indx("grhd_rho");
+    const int iell_grhd_epsl = idr->indx("grhd_epsl");
+    const int iell_grhd_p    = idr->indx("grhd_p");
+    const int iell_grhd_vx   = idr->indx("grhd_vx");
+    const int iell_grhd_vy   = idr->indx("grhd_vy");
+    const int iell_grhd_vz   = idr->indx("grhd_vz");
 
     int fld = 0;
     while(import_fields_with_matter[fld])
@@ -154,31 +185,31 @@ int EIDdataReader(tL *const level)
 
     forallpoints(level, i)
     {
-      Ptr(level, "alpha")[i]   = idr->field[ialpha][i];
-      Ptr(level, "betax")[i]   = idr->field[ibetax][i];
-      Ptr(level, "betay")[i]   = idr->field[ibetay][i];
-      Ptr(level, "betaz")[i]   = idr->field[ibetaz][i];
+      level->v[ibam_alpha][i]   = idr->field[iell_alpha][i];
+      level->v[ibam_betax][i]   = idr->field[iell_betax][i];
+      level->v[ibam_betay][i]   = idr->field[iell_betay][i];
+      level->v[ibam_betaz][i]   = idr->field[iell_betaz][i];
 
-      Ptr(level, "adm_gxx")[i] = idr->field[iadm_gxx][i];
-      Ptr(level, "adm_gxy")[i] = idr->field[iadm_gxy][i];
-      Ptr(level, "adm_gxz")[i] = idr->field[iadm_gxz][i];
-      Ptr(level, "adm_gyy")[i] = idr->field[iadm_gyy][i];
-      Ptr(level, "adm_gyz")[i] = idr->field[iadm_gyz][i];
-      Ptr(level, "adm_gzz")[i] = idr->field[iadm_gzz][i];
+      level->v[ibam_adm_gxx][i] = idr->field[iell_adm_gxx][i];
+      level->v[ibam_adm_gxy][i] = idr->field[iell_adm_gxy][i];
+      level->v[ibam_adm_gxz][i] = idr->field[iell_adm_gxz][i];
+      level->v[ibam_adm_gyy][i] = idr->field[iell_adm_gyy][i];
+      level->v[ibam_adm_gyz][i] = idr->field[iell_adm_gyz][i];
+      level->v[ibam_adm_gzz][i] = idr->field[iell_adm_gzz][i];
 
-      Ptr(level, "adm_Kxx")[i] = idr->field[iadm_Kxx][i];
-      Ptr(level, "adm_Kxy")[i] = idr->field[iadm_Kxy][i];
-      Ptr(level, "adm_Kxz")[i] = idr->field[iadm_Kxz][i];
-      Ptr(level, "adm_Kyy")[i] = idr->field[iadm_Kyy][i];
-      Ptr(level, "adm_Kyz")[i] = idr->field[iadm_Kyz][i];
-      Ptr(level, "adm_Kzz")[i] = idr->field[iadm_Kzz][i];
+      level->v[ibam_adm_Kxx][i] = idr->field[iell_adm_Kxx][i];
+      level->v[ibam_adm_Kxy][i] = idr->field[iell_adm_Kxy][i];
+      level->v[ibam_adm_Kxz][i] = idr->field[iell_adm_Kxz][i];
+      level->v[ibam_adm_Kyy][i] = idr->field[iell_adm_Kyy][i];
+      level->v[ibam_adm_Kyz][i] = idr->field[iell_adm_Kyz][i];
+      level->v[ibam_adm_Kzz][i] = idr->field[iell_adm_Kzz][i];
 
-      Ptr(level, "grhd_rho")[i]  = idr->field[igrhd_rho][i];
-      Ptr(level, "grhd_epsl")[i] = idr->field[igrhd_epsl][i];
-      Ptr(level, "grhd_p")[i]    = idr->field[igrhd_p][i];
-      Ptr(level, "grhd_vx")[i]   = idr->field[igrhd_vx][i];
-      Ptr(level, "grhd_vy")[i]   = idr->field[igrhd_vy][i];
-      Ptr(level, "grhd_vz")[i]   = idr->field[igrhd_vz][i];
+      level->v[ibam_grhd_rho][i]  = idr->field[iell_grhd_rho][i];
+      level->v[ibam_grhd_epsl][i] = idr->field[iell_grhd_epsl][i];
+      level->v[ibam_grhd_p][i]    = idr->field[iell_grhd_p][i];
+      level->v[ibam_grhd_vx][i]   = idr->field[iell_grhd_vx][i];
+      level->v[ibam_grhd_vy][i]   = idr->field[iell_grhd_vy][i];
+      level->v[ibam_grhd_vz][i]   = idr->field[iell_grhd_vz][i];
     }
     
     /* special treatments: */
@@ -199,24 +230,6 @@ int EIDdataReader(tL *const level)
   }
   else if(Getv("EIDdataReader_physics","SBH"))
   {
-    const int ialpha = idr->indx("alpha");
-    const int ibetax = idr->indx("betax");
-    const int ibetay = idr->indx("betay");
-    const int ibetaz = idr->indx("betaz");
-
-    const int iadm_gxx   = idr->indx("adm_gxx");
-    const int iadm_gxy   = idr->indx("adm_gxy");
-    const int iadm_gxz   = idr->indx("adm_gxz");
-    const int iadm_gyy   = idr->indx("adm_gyy");
-    const int iadm_gyz   = idr->indx("adm_gyz");
-    const int iadm_gzz   = idr->indx("adm_gzz");
-
-    const int iadm_Kxx   = idr->indx("adm_Kxx");
-    const int iadm_Kxy   = idr->indx("adm_Kxy");
-    const int iadm_Kxz   = idr->indx("adm_Kxz");
-    const int iadm_Kyy   = idr->indx("adm_Kyy");
-    const int iadm_Kyz   = idr->indx("adm_Kyz");
-    const int iadm_Kzz   = idr->indx("adm_Kzz");
 
     int fld = 0;
     while(import_fields_no_matter[fld])
@@ -229,24 +242,24 @@ int EIDdataReader(tL *const level)
 
     forallpoints(level, i)
     {
-      Ptr(level, "alpha")[i]   = idr->field[ialpha][i];
-      Ptr(level, "betax")[i]   = idr->field[ibetax][i];
-      Ptr(level, "betay")[i]   = idr->field[ibetay][i];
-      Ptr(level, "betaz")[i]   = idr->field[ibetaz][i];
+      level->v[ibam_alpha][i]   = idr->field[iell_alpha][i];
+      level->v[ibam_betax][i]   = idr->field[iell_betax][i];
+      level->v[ibam_betay][i]   = idr->field[iell_betay][i];
+      level->v[ibam_betaz][i]   = idr->field[iell_betaz][i];
 
-      Ptr(level, "adm_gxx")[i] = idr->field[iadm_gxx][i];
-      Ptr(level, "adm_gxy")[i] = idr->field[iadm_gxy][i];
-      Ptr(level, "adm_gxz")[i] = idr->field[iadm_gxz][i];
-      Ptr(level, "adm_gyy")[i] = idr->field[iadm_gyy][i];
-      Ptr(level, "adm_gyz")[i] = idr->field[iadm_gyz][i];
-      Ptr(level, "adm_gzz")[i] = idr->field[iadm_gzz][i];
+      level->v[ibam_adm_gxx][i] = idr->field[iell_adm_gxx][i];
+      level->v[ibam_adm_gxy][i] = idr->field[iell_adm_gxy][i];
+      level->v[ibam_adm_gxz][i] = idr->field[iell_adm_gxz][i];
+      level->v[ibam_adm_gyy][i] = idr->field[iell_adm_gyy][i];
+      level->v[ibam_adm_gyz][i] = idr->field[iell_adm_gyz][i];
+      level->v[ibam_adm_gzz][i] = idr->field[iell_adm_gzz][i];
 
-      Ptr(level, "adm_Kxx")[i] = idr->field[iadm_Kxx][i];
-      Ptr(level, "adm_Kxy")[i] = idr->field[iadm_Kxy][i];
-      Ptr(level, "adm_Kxz")[i] = idr->field[iadm_Kxz][i];
-      Ptr(level, "adm_Kyy")[i] = idr->field[iadm_Kyy][i];
-      Ptr(level, "adm_Kyz")[i] = idr->field[iadm_Kyz][i];
-      Ptr(level, "adm_Kzz")[i] = idr->field[iadm_Kzz][i];
+      level->v[ibam_adm_Kxx][i] = idr->field[iell_adm_Kxx][i];
+      level->v[ibam_adm_Kxy][i] = idr->field[iell_adm_Kxy][i];
+      level->v[ibam_adm_Kxz][i] = idr->field[iell_adm_Kxz][i];
+      level->v[ibam_adm_Kyy][i] = idr->field[iell_adm_Kyy][i];
+      level->v[ibam_adm_Kyz][i] = idr->field[iell_adm_Kyz][i];
+      level->v[ibam_adm_Kzz][i] = idr->field[iell_adm_Kzz][i];
     }
     
     /* special treatments: */
@@ -267,12 +280,12 @@ int EIDdataReader(tL *const level)
   }
 
   /* some tests */
-  double *gxx = Ptr(level, "adm_gxx");
-  double *gxy = Ptr(level, "adm_gxy");
-  double *gxz = Ptr(level, "adm_gxz");
-  double *gyy = Ptr(level, "adm_gyy");
-  double *gyz = Ptr(level, "adm_gyz");
-  double *gzz = Ptr(level, "adm_gzz");
+  double *const gxx = level->v[ibam_adm_gxx];
+  double *const gxy = level->v[ibam_adm_gxy];
+  double *const gxz = level->v[ibam_adm_gxz];
+  double *const gyy = level->v[ibam_adm_gyy];
+  double *const gyz = level->v[ibam_adm_gyz];
+  double *const gzz = level->v[ibam_adm_gzz];
   double detg;
 
   /* check if determinant is positvie, since the metric is Reimannian */
