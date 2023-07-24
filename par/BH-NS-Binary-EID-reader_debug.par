@@ -1,0 +1,157 @@
+###################################
+## Elliptica initial data reader ##
+###################################
+
+## an example parameter file to show how to set parameters needed
+## by Elliptica to import the initial data for black hole neutron star
+## binary systems. search for ??? to set.
+
+physics = adm z4 Gauge matter eos grhd EIDdataReader
+
+############################################################################
+# initial data
+
+EIDdataReader_physics  = BHNS
+EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
+
+## new interface
+EIDdataReader_checkpoint = ??? # /path/to/ELLIPTICA/checkpoint/file
+
+## up to EIDdataReader version v1.1 use:
+#EIDdataReader_exe      = ??? # /path/to/elliptica/exe
+#EIDdataReader_datadir  = ??? # /path/to/checkpoint/file/directory
+
+#############################################################################
+# eos
+
+eos_K		       = 92.12  #100
+eos                    = poly #ideal
+eos_Gamma	       = 2
+
+############################################################################
+## resolution dependent quantities
+
+amr_move_nxyz               = 16
+nxyz                        = 32
+
+dxyz                        = 15.936 #31.872 #0.249*2^7
+amr_bo_dxmax                = 0.249*8
+
+
+############################################################################
+# checkpointing
+
+checkpoint                  = no
+checkpoint_dt_hours         = 100
+checkpoint_dt_hours_quit    = 100
+checkpoint_variables        = all
+
+checkpoint_resub            = no
+
+ExitIfNAN                   = yes
+############################################################################
+# basic setup
+
+order_centered              = 4
+order_advection             = 4
+advection_lopsided6         = 2
+advection_lopsided          = 1
+
+order_dissipation           = 6
+dissipation_factor          = 0.5
+dissipation_factor_level0   = 0.1
+
+bampi_timer_on              = yes
+bampi_lowlatency            = yes
+bampi_nghosts               = 6
+order_RP                    = 6
+order_RP_shells             = 6
+amr_nbuffer                 = 6
+
+amr_lmax                    = 1
+amr_move_lcube              = 0
+
+amr                         = bo newfmr move
+amr_fmr                     = nestedboxes
+grid                        = box bitant #for precessing cases this should be changed
+
+#############################################################################
+# evolution
+
+evolution_method            = rk
+evolution_method_rk         = rk4g
+dtfac                       = 0.25
+finaltime                   = 20000 #20000=0.098 sec.
+
+z4_normalizedetg            = yes
+z4_subtractA                = yes
+z4_chi_div_floor            = 1e-5
+
+z4_initial_lapse            = donothing
+z4_initial_shift            = zero
+z4_lapse                    = 1+log withshift
+z4_shift                    = gamma0 withGadv withBadv withShiftadv
+z4_shiftalphapower          = 0.0
+z4_shiftdriver              = 0.3
+z4_shiftgammacoeff          = 0.75
+
+z4_kappa1                   = 0.02
+z4_kappa2                   = 0.0
+
+punctures_lapse             = psiBL^(-2)
+
+
+#############################################################################
+# hydro
+
+grhd_C2P                    = p_root
+grhd_C2P_NewtonRaphsonTR    = 1e-11
+grhd_C2P_NewtonRaphsonNR    = 250
+
+grhd_vmax                   = 0.9999
+grhd_Wlor_max               = 1e8
+
+grhd_use_atmosphere         = ColdStatic
+grhd_atm_factor             = 1e2
+grhd_atm_level              = 1e-12
+grhd_use_atmosphere_mask    = yes
+grhd_recvel                 = bx
+
+hrsc_nghosts                = 4
+hrsc_rec                    = WENOZ
+hrsc_TVD_limiter            = MC2
+hrsc_rec_metric             = LAG6
+hrsc_flux                   = HO_LLF
+hrsc_flux_switch_rho        = 1e4
+
+grhd_use_excision           = no
+grhd_excision_rfct          = 0.9
+grhd_excision_modus         = atm
+
+matter_interpolate_scheme_restriction  = linear
+matter_interpolate_scheme_prolongation = linear
+matter_interpolate_order  = 4
+conservative_amr          = yes
+camr_treshold             = 1e20
+
+#############################################################################
+# output
+
+stdout_flush = yes
+
+
+#############################################################################
+# boundary
+
+boundary                = background radcentered 
+
+############################################################################
+# gauge
+
+Gauge                   = moving_puncture
+compute_moving_puncture_distance = line
+moving_puncture_fixz    = none
+
+track_matter_var        = alpha
+track_matter_mode       = min
+track_matter_minmove    = 0.01
