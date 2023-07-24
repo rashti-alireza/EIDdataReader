@@ -63,7 +63,11 @@ static const char *const import_fields_no_matter[] = /* matter excluded */
 int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
-  int i; // dummy index the for loop
+
+  double *const x = level->v[Ind("x")];
+  double *const y = level->v[Ind("y")];
+  double *const z = level->v[Ind("z")];
+  int i;
   
   /* initialize ID Reader */ 
   Elliptica_ID_Reader_T *idr = 
@@ -71,9 +75,9 @@ int EIDdataReader(tL *const level)
   
   // specify interpolation points
   idr->npoints  = level->npoints;
-  idr->x_coords = level->v[Ind("x")];
-  idr->y_coords = level->v[Ind("y")];
-  idr->z_coords = level->v[Ind("z")];
+  idr->x_coords = x;
+  idr->y_coords = y;
+  idr->z_coords = z;
   
   /* specify interpolating fields */
   if(Getv("EIDdataReader_physics","BHNS"))
@@ -176,6 +180,22 @@ int EIDdataReader(tL *const level)
       Ptr(level, "grhd_vy")[i]   = idr->field[igrhd_vy][i];
       Ptr(level, "grhd_vz")[i]   = idr->field[igrhd_vz][i];
     }
+    
+    /* special treatments: */
+    /* set psi and its derivs */
+    i = Ind("adm_psi"); enablevar(level, i);
+    double *psi = level->v[i++];
+    forallpoints(level,i)
+    {
+      psi[i] = 1.0;
+    }
+    i = Ind("adm_dpsiopsix");   enablevar(level, i);
+    i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
+    /* set S_i's and S_ij's */
+    i = Ind("adm_Sx");   enablevar(level, i);
+    i = Ind("adm_SSxx"); enablevar(level, i);
+    /* adm_rho */
+    i = Ind("adm_rho"); enablevar(level, i);
   }
   else if(Getv("EIDdataReader_physics","SBH"))
   {
@@ -228,10 +248,45 @@ int EIDdataReader(tL *const level)
       Ptr(level, "adm_Kyz")[i] = idr->field[iadm_Kyz][i];
       Ptr(level, "adm_Kzz")[i] = idr->field[iadm_Kzz][i];
     }
+    
+    /* special treatments: */
+    /* set psi and its derivs */
+    i = Ind("adm_psi"); enablevar(level, i);
+    double *psi = level->v[i++];
+    forallpoints(level,i)
+    {
+      psi[i] = 1.0;
+    }
+    i = Ind("adm_dpsiopsix");   enablevar(level, i);
+    i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
+
   }
   else
   {
     errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
+
+  /* some tests */
+  double *gxx = Ptr(level, "adm_gxx");
+  double *gxy = Ptr(level, "adm_gxy");
+  double *gxz = Ptr(level, "adm_gxz");
+  double *gyy = Ptr(level, "adm_gyy");
+  double *gyz = Ptr(level, "adm_gyz");
+  double *gzz = Ptr(level, "adm_gzz");
+  double detg;
+
+  /* check if determinant is positvie, since the metric is Reimannian */
+  forallpoints(level,i)
+  {
+    detg=(2.*gxy[i]*gxz[i]*gyz[i] + gxx[i]*gyy[i]*gzz[i] -
+             gzz[i]*gxy[i]*gxy[i] - gyy[i]*gxz[i]*gxz[i] -
+             gxx[i]*gyz[i]*gyz[i]);
+
+    if(detg<=0.)
+    {
+      printf("det(g_ij)=%g at ccc=i=%d:  x=%g y=%g z=%g\n", 
+             detg, i, x[i], y[i], z[i]);
+    }
   }
 
   printf("~> Populating BAM variables based on initial data --> Done.\n");
