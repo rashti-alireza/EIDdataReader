@@ -98,6 +98,7 @@ int EIDdataReader(tL *const level)
     // dir that you just made. now read the fields and save them into text 
     // files. finally compare the texts file between the two directories.
     // they should match.
+    // NOTE: the run config, i.e., mpi etc should be the same.
     if (EID_DEBUG)
     {
       debug_save_fields_to_txt(level,import_fields_with_matter);
