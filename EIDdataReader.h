@@ -1,5 +1,4 @@
-
-
+#include <assert.h>
 
 /* Setd and print */
 #define MySetd(x,y) \
@@ -44,11 +43,11 @@ if (x){\
   ASSERT(fread(&SIZE_, sizeof(SIZE_),1,file));\
   ASSERT(fread(&(x),sizeof(x),SIZE_,file));}
 
+#define STR_LEN_MAX (9999)
 #define HEADER "#{data#"
 #define FOOTER "#}data#"
 #define END_MSG "\n#file_completed#\n"
 
 #define ASSERT assert
+#define Fclose(x)  (x ? fclose(x),(x) = NULL : NULL)
 
-
-static void populate_fields_for_bam(tL *const level, char *const fields_file_path);
