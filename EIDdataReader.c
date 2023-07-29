@@ -247,7 +247,7 @@ int EIDpreGrid(tL *const level)
 /* populating the fields made by Elliptica into bam */
 static void read_fields_from_file(tL *const level, char *const fields_file_path)
 {
-  printf("calling %s:\n",__func__);
+  printf("calling: %s ...\n",__func__);
   fflush(stdout);
   
   FILE *file = 0;
@@ -418,15 +418,13 @@ static void read_fields_from_file(tL *const level, char *const fields_file_path)
     }
   }
 
-  printf("~> Populating BAM variables based on initial data --> Done.\n");
-  fflush(stdout);
 }
 
 // after interpolation of *field_names* save the data into the given *file_path*
 static void save_interpolated_values(tL *const level,const char *const file_path, 
                                      const char *const field_names[])
 {
-  printf("calling %s:\n",__func__);
+  printf("calling: %s ...\n",__func__);
   fflush(stdout);
 
   FILE *file = 0;
@@ -483,13 +481,14 @@ static void save_interpolated_values(tL *const level,const char *const file_path
 // interpolate from scratch and save (if asked)
 static void interpolate_field(tL *const level)
 {
-  printf("calling %s:\n",__func__);
+  printf("calling: %s ...\n",__func__);
   fflush(stdout);
 
   double *const x = level->v[Ind("x")];
   double *const y = level->v[Ind("y")];
   double *const z = level->v[Ind("z")];
   const int rank  = bampi_rank();
+  const char *const outdir = Gets("outdir");
   char fields_file_path[STR_LEN_MAX] = {'\0'};
   int i;
   
@@ -576,9 +575,6 @@ static void interpolate_field(tL *const level)
   const int iell_adm_Kyz = idr->indx("adm_Kyz");
   const int iell_adm_Kzz = idr->indx("adm_Kzz");
   
-  printf("~> Populating BAM variables based on initial data ...\n");
-  fflush(stdout);
-  
   // populate fields
   if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS") )
   {
@@ -654,16 +650,15 @@ static void interpolate_field(tL *const level)
     
     if (Getv("EIDdataReader_save","yes"))
     {
-      sprintf(fields_file_path, "%s/fields_level%d_proc%d.dat",
-              Gets("EIDdataReader_loadfrom"), level->l, rank);
-      
+      sprintf(fields_file_path, "%s/%s/fields_level%d_proc%d.dat", 
+        outdir,Gets("EIDdataReader_outdir"),level->l, rank);
+          
       save_interpolated_values(level,fields_file_path,import_fields_with_matter);
     }
     
   }
   else if(Getv("EIDdataReader_physics","SBH"))
   {
-
     int fld = 0;
     while(import_fields_no_matter[fld])
     {
@@ -708,8 +703,8 @@ static void interpolate_field(tL *const level)
 
     if (Getv("EIDdataReader_save","yes"))
     {
-      sprintf(fields_file_path, "%s/fields_level%d_proc%d.dat",
-              Gets("EIDdataReader_loadfrom"), level->l, rank);
+      sprintf(fields_file_path, "%s/%s/fields_level%d_proc%d.dat", 
+        outdir,Gets("EIDdataReader_outdir"),level->l, rank);
       
       save_interpolated_values(level,fields_file_path,import_fields_no_matter);
     }
@@ -741,11 +736,6 @@ static void interpolate_field(tL *const level)
              detg, i, x[i], y[i], z[i]);
     }
   }
-
-  printf("~> Populating BAM variables based on initial data --> Done.\n");
-  fflush(stdout);
-  
   // free workspace
   elliptica_id_reader_free(idr);
-
 }
