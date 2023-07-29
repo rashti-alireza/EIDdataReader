@@ -64,6 +64,16 @@ int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
 
+  /* if this is a checkpoint, just read field values from the save files */
+  if(Getv("checkpoint","restart") && Getv("EIDdataReader_save","yes"))
+  {
+    sprintf(fields_file_path, "%s_previous/%s/fields_level%d_proc%d.dat",
+      outdir,Gets("EIDdataReader_outdir"), level->l, rank);
+
+    /* populate fields for bam */
+    populate_fields_for_bam(level,fields_file_path);
+  }
+
   double *const x = level->v[Ind("x")];
   double *const y = level->v[Ind("y")];
   double *const z = level->v[Ind("z")];
@@ -452,4 +462,181 @@ int EIDpreGrid(tL *const level)
   elliptica_id_reader_free(idr);
   
   return 0;
+}
+
+/* populating the fields made by Elliptica into bam */
+static void populate_fields_for_bam(tL *const level, char *const fields_file_path)
+{
+  printf("~> Populating BAM variables based on initial data ...\n");
+  fflush(stdout);
+  FILE *file = 0;
+  double *v  = 0;
+  char *v_name = 0;
+  const double *const x = level->v[Ind("x")];
+  const double *const y = level->v[Ind("y")];
+  const double *const z = level->v[Ind("z")];
+  char *match_str;
+  char msg[STR_LEN_MAX];
+  int msg_len = (int)strlen(END_MSG)+1;
+  int i,f;
+  
+  /* read fields from the file made by Elliptica */
+  file = fopen(fields_file_path,"r");
+  if(!file) 
+    errorexits("could not open %s", fields_file_path);
+    
+  /* check if data file is completed */
+  fseek(file,-msg_len,SEEK_END);
+  ASSERT(fread(msg,(unsigned)msg_len,1,file));
+  if (!strstr(msg,END_MSG))
+    errorexit("Fields data file is corrupted.\n");
+    
+  fseek(file,0,SEEK_SET);
+  fgets(msg,STR_LEN_MAX,file);/* read first comment */
+  
+  FReadP_bin(match_str);/* read header */
+  if (strcmp(match_str,HEADER))
+    errorexit("It could not find the header.\n");
+  free(match_str);
+  
+  /* read fields content */
+  if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS"))
+  {
+    f = 0;
+    while(import_fields_with_matter[f])
+    {
+      /* read field name */
+      FReadP_bin(v_name);
+      if(strcmp(v_name,import_fields_with_matter[f]))
+         errorexit("It could not find the field.\n");
+         
+      /* free */
+      free(v_name);
+      
+      /* enable */   
+      int comp = Ind(import_fields_with_matter[f]);
+      enablevarcomp(level, comp);
+      v = level->v[comp];
+      
+      /* read field value */
+      forallpoints(level,i)
+      {
+        FReadV_bin(v[i]);
+        ASSERT(isfinite(v[i]));
+      }
+      
+      ++f;
+    }
+  }
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    f = 0;
+    while(import_fields_no_matter[f])
+    {
+      /* read field name */
+      FReadP_bin(v_name);
+      if(strcmp(v_name,import_fields_no_matter[f]))
+         errorexit("It could not find the field.\n");
+         
+      /* free */
+      free(v_name);
+      
+      /* enable */   
+      int comp = Ind(import_fields_no_matter[f]);
+      enablevarcomp(level, comp);
+      v = level->v[comp];
+      
+      /* read field value */
+      forallpoints(level,i)
+      {
+        FReadV_bin(v[i]);
+        ASSERT(isfinite(v[i]));
+      }
+      
+      ++f;
+    }
+  }
+  else
+  {
+    errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
+    
+  FReadP_bin(match_str);/* read footer */
+  if (strcmp(match_str,FOOTER))
+    errorexit("It could not find the footer.\n");
+  free(match_str);
+  fclose(file);
+  
+  /* special treatments: */
+  /* set psi and its derivs */
+  i = Ind("adm_psi"); enablevar(level, i);
+  double *psi = level->v[i++];
+  forallpoints(level,i)
+  {
+    psi[i] = 1.0;
+  }
+  i = Ind("adm_dpsiopsix");   enablevar(level, i);
+  i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
+  
+  if(Getv("EIDdataReader_physics",BHNS))
+  {
+  /* set S_i's and S_ij's */
+    i = Ind("adm_Sx");   enablevar(level, i);
+    i = Ind("adm_SSxx"); enablevar(level, i);
+    
+    /* adm_rho */
+    i = Ind("adm_rho"); enablevar(level, i);
+  }
+  
+  double *gxx = Ptr(level, "adm_gxx");
+  double *gxy = Ptr(level, "adm_gxy");
+  double *gxz = Ptr(level, "adm_gxz");
+  double *gyy = Ptr(level, "adm_gyy");
+  double *gyz = Ptr(level, "adm_gyz");
+  double *gzz = Ptr(level, "adm_gzz");
+  
+  /* set tr(K0)? */
+  if (0)
+  {
+    i = Ind("adm_K0"); enablevar(level, i);
+    double *Kxx = Ptr(level, "adm_Kxx");
+    double *Kxy = Ptr(level, "adm_Kxy");
+    double *Kxz = Ptr(level, "adm_Kxz");
+    double *Kyy = Ptr(level, "adm_Kyy");
+    double *Kyz = Ptr(level, "adm_Kyz");
+    double *Kzz = Ptr(level, "adm_Kzz");
+    double *K0  = Ptr(level, "adm_K0");
+    
+    double ixx, ixy, ixz, iyy, iyz, izz;
+    
+    forallpoints(level, i)
+    {
+      invg(gxx[i], gxy[i], gxz[i], gyy[i], gyz[i], gzz[i],
+           &ixx, &ixy, &ixz, &iyy, &iyz, &izz);
+
+      K0[i] = 
+          (ixx*Kxx[i] + iyy*Kyy[i] + izz*Kzz[i] 
+              + 2*(ixy*Kxy[i] + ixz*Kxz[i] + iyz*Kyz[i]));
+
+    }
+  }
+  /* some tests */
+  double detg;
+  
+  /* check if determinant is positvie, since the metric is Reimannian */
+  forallpoints(level,i)
+  {
+    detg=(2.*gxy[i]*gxz[i]*gyz[i] + gxx[i]*gyy[i]*gzz[i] -
+             gzz[i]*gxy[i]*gxy[i] - gyy[i]*gxz[i]*gxz[i] -
+             gxx[i]*gyz[i]*gyz[i]);
+    
+    if(detg<=0)
+    {
+      printf("det(g_ij)=%g at ccc=i=%d:  x=%g y=%g z=%g\n", 
+             detg, i, x[i], y[i], z[i]);
+    }
+  }
+
+  printf("~> Populating BAM variables based on initial data --> Done.\n");
+  fflush(stdout);
 }

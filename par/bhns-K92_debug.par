@@ -16,6 +16,7 @@ EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
 
 ## new interface
 EIDdataReader_checkpoint = ??? # /path/to/ELLIPTICA/checkpoint/file
+EIDdataReader_save       = yes # save interpolated fields
 
 ## up to EIDdataReader version v1.1 use:
 #EIDdataReader_exe      = ??? # /path/to/elliptica/exe

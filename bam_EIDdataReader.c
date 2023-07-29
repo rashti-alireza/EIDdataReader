@@ -43,6 +43,22 @@ void bam_EIDdataReader(void)
    "options: [zero,inspiral]"
    "o. zero     = for inertial frame."
    "o. inspiral = for corotating frame.");
+
+  AddPar("EIDdataReader_save", "no",
+         "write the interpolated data into files in 'EIDdataReader_outdir'. "
+         "so after a restart from a checkpoint, it reads this files directly "
+         "and no interpolation is called."
+         "optiones: [yes,no]");
+
+  /* set output directory */
+  AddPar("EIDdataReader_outdir", "elliptica_id",
+         "location of imported initial data for bam");
+  
+  /* mkdir outdir if not exists */
+  char mydir[STR_LEN_MAX];
+  sprintf(mydir,"%s/%s",Gets("outdir"),Gets("EIDdataReader_outdir"));
+  if (processor0 && !system_isdir(mydir))
+    if (system_mkdir(mydir)) errorexit("mkdir failed!");
   
   AddPar("mass1","1.0", "used in grid setup at PRE_GRID");
   AddPar("mass2","1.0", "used in grid setup at PRE_GRID");
