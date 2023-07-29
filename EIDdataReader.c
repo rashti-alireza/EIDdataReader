@@ -6,6 +6,7 @@
 
 static void read_fields_from_file(tL *const level, char *const fields_file_path);
 static void interpolate_field(tL *const level);
+static void debug_save_fields_to_txt(tL *const level,const char *const field_names[]);
 
 /* initialize the following fields imported using the initial data.
 // NOTE: in Elliptica fields are the same as variables in BAM.
@@ -656,6 +657,11 @@ static void interpolate_field(tL *const level)
       save_interpolated_values(level,fields_file_path,import_fields_with_matter);
     }
     
+    if (DEBUG_TXT)
+    {
+      debug_save_fields_to_txt(level,import_fields_with_matter);
+    }
+    
   }
   else if(Getv("EIDdataReader_physics","SBH"))
   {
@@ -708,6 +714,11 @@ static void interpolate_field(tL *const level)
       
       save_interpolated_values(level,fields_file_path,import_fields_no_matter);
     }
+    
+    if (DEBUG_TXT)
+    {
+      debug_save_fields_to_txt(level,import_fields_no_matter);
+    }
   }
   else
   {
@@ -738,4 +749,38 @@ static void interpolate_field(tL *const level)
   }
   // free workspace
   elliptica_id_reader_free(idr);
+}
+
+// save field to txt files for debug purposes
+static void debug_save_fields_to_txt(tL *const level,const char *const field_names[])
+{
+  printf("calling: %s ...\n",__func__);
+  fflush(stdout);
+  
+  const char *const outdir = Gets("outdir");
+  const int rank = bampi_rank();
+  FILE *file = 0;
+  char file_path[STR_LEN_MAX] = {'\0'};
+  int fld,i;
+  
+  fld = 0;
+  while(field_names[fld])
+  {
+    sprintf(file_path, "%s/%s/debug_%s_level%d_proc%d.txt", 
+            outdir,Gets("EIDdataReader_outdir"),field_names[fld],level->l, rank);
+  
+    file = fopen(file_path,"w");
+    if(!file) errorexits("could not open %s", file_path);
+  
+    const double *interp_v = level->v[Ind(field_names[fld])];
+    fprintf(file,"# point_index %s\n",field_names[fld]);
+    // write its values
+    forallpoints(level, i)
+    {
+      fprintf(file,"%d %0.15e\n",i,interp_v[i]);
+    }
+    fld++;
+    
+    Fclose(file);
+  }
 }

@@ -1,5 +1,7 @@
 #include <assert.h>
 
+#define DEBUG_TXT (1)
+
 /* Setd and print */
 #define MySetd(x,y) \
   Setd(x,(y)); \
