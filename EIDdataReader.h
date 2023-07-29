@@ -1,6 +1,13 @@
 #include <assert.h>
 
 #define EID_DEBUG (0)
+#define STR_LEN_MAX (9999)
+#define HEADER "#{data#"
+#define FOOTER "#}data#"
+#define END_MSG "\n#file_completed#\n"
+
+#define ASSERT assert
+#define Fclose(x)  (x ? fclose(x),(x) = NULL : NULL)
 
 /* Setd and print */
 #define MySetd(x,y) \
@@ -44,12 +51,4 @@ if (x){\
   unsigned SIZE_ = 0;\
   ASSERT(fread(&SIZE_, sizeof(SIZE_),1,file));\
   ASSERT(fread(&(x),sizeof(x),SIZE_,file));}
-
-#define STR_LEN_MAX (9999)
-#define HEADER "#{data#"
-#define FOOTER "#}data#"
-#define END_MSG "\n#file_completed#\n"
-
-#define ASSERT assert
-#define Fclose(x)  (x ? fclose(x),(x) = NULL : NULL)
 
