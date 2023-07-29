@@ -83,6 +83,16 @@ int EIDdataReader(tL *const level)
 
     /* populate fields for bam */
     read_fields_from_file(level,fields_file_path);
+    
+    // first run and save data into a dir (with writing field text data file). 
+    // then run another call, this time with EIDdataReader_loadfrom to the 
+    // dir that you just made. now read the fields and save them into text 
+    // files. finally compare the texts file between the two directories.
+    // they should match.
+    if (EID_DEBUG)
+    {
+      debug_save_fields_to_txt(level,import_fields_with_matter);
+    }
   }
   // load from the specified directory
   else if (!Getv("EIDdataReader_loadfrom","not_set!"))
@@ -657,7 +667,7 @@ static void interpolate_field(tL *const level)
       save_interpolated_values(level,fields_file_path,import_fields_with_matter);
     }
     
-    if (DEBUG_TXT)
+    if (EID_DEBUG)
     {
       debug_save_fields_to_txt(level,import_fields_with_matter);
     }
