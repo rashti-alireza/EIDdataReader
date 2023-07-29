@@ -3,6 +3,8 @@
 #include "bam.h"
 #include "bam_EIDdataReader.h"
 
+#define STR_LEN_MAX (1000)
+
 int EIDdataReader(tL *const level);
 int EIDpreGrid(tL *const level);
 
@@ -49,6 +51,12 @@ void bam_EIDdataReader(void)
          "so after a restart from a checkpoint, it reads this files directly "
          "and no interpolation is called."
          "optiones: [yes,no]");
+
+  /* load from this dir */
+  AddPar("EIDdataReader_loadfrom", "not_set!",
+         "if this param is set, it won't call Elliptica anymore and "
+         "just reads data from the given directory."
+         "Used to quickly load data into bam for debug purposes.");
 
   /* set output directory */
   AddPar("EIDdataReader_outdir", "elliptica_id",
