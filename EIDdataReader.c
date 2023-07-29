@@ -510,7 +510,7 @@ static void interpolate_field(tL *const level)
                    "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
                    "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz,"
                    "grhd_rho,grhd_p,grhd_epsl,grhd_vx,grhd_vy,grhd_vz";
-    idr->set_param("BHNS_filler_method",Gets("EIDdataReader_BHfiller"),idr);
+    idr->set_param("BH_filler_method",Gets("EIDdataReader_BHfiller"),idr);
     idr->set_param("ADM_B1I_form","zero",idr); 
   }
   else if(Getv("EIDdataReader_physics","NSNS"))
