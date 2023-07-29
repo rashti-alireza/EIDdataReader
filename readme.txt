@@ -6,6 +6,8 @@
 INCS += -I/home/alireza/Workstation/Elliptica_ID_Reader/include/ 
 SPECIALLIBS += -L/home/alireza/Workstation/Elliptica_ID_Reader/lib/ -lelliptica_id_reader
 
-## SBH and NSNS sections have not tested!
+## NOTEs and TODOs:
+. the latest commit has not been tested for SBH and NSNS sections.
 
-## does it call interpolator again, after restarting bam from a checkpoint?
+. for now, one can use the version v1.1 for SBH.
+
