@@ -4,7 +4,7 @@ physics = adm z4 Gauge EIDdataReader Invariants
 
 #############################################################################
 # initial data
-
+## use version v1.1 of this branch
 EIDdataReader_exe      = ?
 EIDdataReader_datadir  = ?
 EIDdataReader_physics  = SBH
