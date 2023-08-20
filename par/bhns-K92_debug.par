@@ -14,11 +14,11 @@ physics = adm z4 Gauge matter eos grhd EIDdataReader
 EIDdataReader_physics  = BHNS
 EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
 
-## new interface
+## new interface after version v1.1(exclusive)
 EIDdataReader_checkpoint = ??? # /path/to/ELLIPTICA/checkpoint/file
 EIDdataReader_save       = yes # save interpolated fields
 
-## up to EIDdataReader version v1.1 use:
+## only up to EIDdataReader version v1.1(inclusive) use:
 #EIDdataReader_exe      = ??? # /path/to/elliptica/exe
 #EIDdataReader_datadir  = ??? # /path/to/checkpoint/file/directory
 
