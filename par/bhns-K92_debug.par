@@ -4,38 +4,45 @@
 
 ## an example parameter file to show how to set parameters needed
 ## by Elliptica to import the initial data for black hole neutron star
-## binary systems.
+## binary systems. search for ??? to set.
 
-physics = adm z4 Gauge matter eos grhd EIDdataReader Invariants ADM_mass AHmod hydroanalysis
-
-
-############################################################################
-### resolution dependent quantities
-
-
-amr_move_nxyz               = 64
-nxyz                        = 128
-
-dxyz                        = 15.936 #31.872 #0.249*2^7
-amr_bo_dxmax                = 0.249*8
-
-0douttime                   = 0.249*4  #around 1
-2douttime                   = 0.249*80 #around 20
-Invariants_output_time      = 0.249*8  #around 2 
-AHmod_time                  = 0.249*8  #around 2
+physics = adm z4 Gauge matter eos grhd EIDdataReader
 
 ############################################################################
 # initial data
 
-EIDdataReader_exe      = ?
-EIDdataReader_datadir  = ?
 EIDdataReader_physics  = BHNS
 EIDdataReader_BHfiller = ChebTn_Ylm_perfect_s2
+
+## new interface after version v1.1(exclusive)
+EIDdataReader_checkpoint = ??? # /path/to/ELLIPTICA/checkpoint/file
+EIDdataReader_save       = yes # save interpolated fields
+
+## only up to EIDdataReader version v1.1(inclusive) use:
+#EIDdataReader_exe      = ??? # /path/to/elliptica/exe
+#EIDdataReader_datadir  = ??? # /path/to/checkpoint/file/directory
+
+#############################################################################
+# eos
+
+eos_K		       = 92.12  #100
+eos                    = poly #ideal
+eos_Gamma	       = 2
+
+############################################################################
+## resolution dependent quantities
+
+amr_move_nxyz               = 16
+nxyz                        = 32
+
+dxyz                        = 15.936 #31.872 #0.249*2^7
+amr_bo_dxmax                = 0.249*8
+
 
 ############################################################################
 # checkpointing
 
-checkpoint                  = yes
+checkpoint                  = no
 checkpoint_dt_hours         = 100
 checkpoint_dt_hours_quit    = 100
 checkpoint_variables        = all
@@ -62,8 +69,8 @@ order_RP                    = 6
 order_RP_shells             = 6
 amr_nbuffer                 = 6
 
-amr_lmax                    = 2
-amr_move_lcube              = 2
+amr_lmax                    = 1
+amr_move_lcube              = 0
 
 amr                         = bo newfmr move
 amr_fmr                     = nestedboxes
@@ -75,7 +82,7 @@ grid                        = box bitant #for precessing cases this should be ch
 evolution_method            = rk
 evolution_method_rk         = rk4g
 dtfac                       = 0.25
-finaltime                   = 20000 #20000=0.098 sec.
+finaltime                   = 0.01 #20000=0.098 sec.
 
 z4_normalizedetg            = yes
 z4_subtractA                = yes
@@ -94,12 +101,6 @@ z4_kappa2                   = 0.0
 
 punctures_lapse             = psiBL^(-2)
 
-#############################################################################
-# eos
-
-eos                         = pwphot  #pwphotWT
-eos_Gamma                   = 1.75
-eos_tab_file                = /home/alireza/Workstation/bam/src/projects/eos/tab/pwpfits/eos_sly.pwp
 
 #############################################################################
 # hydro
@@ -140,15 +141,6 @@ camr_treshold             = 1e20
 stdout_flush = yes
 
 
-0doutput                = alpha ham momx momy momz grhd_D grhd_rho hydroa_uesc hydroa_Du hydroa_Db hydroa_Dh hydroa_etot hydroa_Px hydroa_Py hydroa_Pz hydroa_Pux hydroa_Puy hydroa_Puz
-
-
-2doutput                = grhd_rho grhd_epsl grhd_p grhd_v grhd_vx grhd_vy grhd_vz grhd_v2 hydroa_Du hydroa_Dh
-2doutputmode            = xy xz
-2dformat                = vtk binary float
-2doutinterpolate        = no
-2doutputall             = yes
-
 #############################################################################
 # boundary
 
@@ -164,72 +156,3 @@ moving_puncture_fixz    = none
 track_matter_var        = alpha
 track_matter_mode       = min
 track_matter_minmove    = 0.01
-
-#############################################################################
-# invariants
-
-ntheta                      = 47
-nphi                        = 46
-invariants_compute_modes    = yes
-invariants_modes_r          = 300 400 500 600 700 800 900 1000 1100 1200
-invariants_modes_lmin       = 0
-invariants_modes_lmax       = 5
-invariants_energy_r         = 300 400 500 600 700 800 900 1000 1100 1200
-gauss_codacci_mainardi      = standard
-invariants_order            = 6
-
-
-#############################################################################
-# ADM Mass
-# (extract same radii as waves)
-
-ADM_mass_ncircles     = 101
-ADM_mass_npoints      = 80
-ADM_mass_lmin         = 0
-ADM_mass_lmax         = 5
-ADM_mass_r            = 300 400 500 600 700 800 900 1000 1100 1200
-
-#######################################################
-# AH finder
-
-AHmod_verbose     = no
-AHmod_ntheta      = 30
-AHmod_nphi        = 60
-AHmod_LMAX        = 10
-AHmod_interpolation_order = 4
-AHmod_nhorizons   = 1
-AHmod_searchMTS   = 1  4000  20000.0  0
-AHmod_uselast     = yes
-AHmod_initial_guess_expand = 1.0
-AHmod_LevelOffset = 1
-AHmod_UseOptimalLevel = no
-AHmod_surface0_WaitUntilClosePunctures = no
-AHmod_flow_iter   = 500
-AHmod_mass_tol    = 1.0e-04
-AHmod_hmean_tol   = 100.0
-AHmod_output      = yes
-AHmod_output_xyt  = yes
-AHmod_output_lm   = yes
-
-#######################################################
-#hydroanalysis
-
-hydroanalysis_ejecta_spheres  = yes
-hydroanalysis_ejecta_spheres_radius = 100
-hydroanalysis_ejecta_nradius = 10
-hydroanalysis_ejecta_dradius = 50
-
-hydroanalysis_Mbar_radius  = 8
-hydroanalysis_Mbar_nradius = 10
-hydroanalysis_Mbar_dradius = 0.5
-hydroanalysis_rATM         = 1e-25
-hydroa_mode_projection     = no
-
-#######################################################
-#puncture properties
-
-moving_puncture_properties  = yes
-puncture_properties_r       = 8 9 10 11 12 14 15 20
-puncture_properties_punc    = 2
-puncture_properties_npoints = 40
-puncture_properties_circles = 41

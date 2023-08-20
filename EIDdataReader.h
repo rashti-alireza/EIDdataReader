@@ -1,33 +1,18 @@
 #include <assert.h>
 
-/* bothered with compiler warning for const qualifier? */
-#define const 
-
-/* file and parameter prefix, let's keep them capitalized for Elliptica */
-#define BHNS_ "BHNS_"
-#define SBH_  "SBH_"
-#define BHNS  "BHNS"
-#define SBH   "SBH"
-#define EVO_  "BAM_"
-
-/* instruct Elliptica to save new changes in checkpoint parameter */
-#define MODIFY "modify:"
-
-/* handy macro */
-#define Pbhns_ MODIFY BHNS_ EVO_
-#define Psbh_  MODIFY SBH_  EVO_
-
-#define STR_LEN_MAX   (1000)
-#define STR_LEN_MAX2x (2000)
-
+#define EID_DEBUG (0)
+#define STR_LEN_MAX (9999)
 #define HEADER "#{data#"
 #define FOOTER "#}data#"
 #define END_MSG "\n#file_completed#\n"
 
 #define ASSERT assert
+#define Fclose(x)  (x ? fclose(x),(x) = NULL : NULL)
 
-/* deleting files created by Elliptica */
-#define DELETE (1)
+/* Setd and print */
+#define MySetd(x,y) \
+  Setd(x,(y)); \
+  printf("%-30s = %+g\n",x,(y));
 
 /* this is how we write binary data: first write size and then value. 
 // thus, when we wanna read the data the first one gives of the memory allocation 
@@ -66,28 +51,4 @@ if (x){\
   unsigned SIZE_ = 0;\
   ASSERT(fread(&SIZE_, sizeof(SIZE_),1,file));\
   ASSERT(fread(&(x),sizeof(x),SIZE_,file));}
-
-/* get parameter */
-#define READ_PARAMETER_FROM_FILE(y,x) \
-  fseek(file,0,SEEK_SET);\
-  ret = fgetparameter(file, x, str);\
-  if (ret == EOF)\
-    errorexits("could not find %s parameter", x);\
-  y = atof(str);\
-  printf("%-30s = %+g\n",x,y);
-
-/* Setd and print */
-#define MySetd(x,y) \
-  Setd(x,(y)); \
-  printf("%-30s = %+g\n",x,(y));
-
-int EIDdataReader(tL *const level);
-int EIDpreGrid(tL *const level);
-static void call_elliptica_and_write_fields(tL *const level,char *const coords_file_path, char *const fields_file_path);
-static void write_coords(tL *const level,char *const coords_file_path);
-static void populate_fields_for_bam(tL *const level, char *const fields_file_path);
-
-
-
-
 

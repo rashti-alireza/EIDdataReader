@@ -1,7 +1,12 @@
 /* Alireza Rashti Feb 2020 */
 
 #include "bam.h"
+#include "elliptica_id_reader_lib.h"
 #include "EIDdataReader.h"
+
+static void read_fields_from_file(tL *const level, char *const fields_file_path);
+static void interpolate_field(tL *const level);
+static void debug_save_fields_to_txt(tL *const level,const char *const field_names[]);
 
 /* initialize the following fields imported using the initial data.
 // NOTE: in Elliptica fields are the same as variables in BAM.
@@ -16,6 +21,7 @@
 // asymptotically behaves like an inertial frame. In practice, 
 // we ignore omega *r part of shifts vector and transform other fields
 // consequently.  */
+
 static const char *const import_fields_with_matter[] = /* matter included */
 {
 "alpha",/* lapse: alpha */
@@ -32,8 +38,8 @@ static const char *const import_fields_with_matter[] = /* matter included */
 "grhd_vx","grhd_vy","grhd_vz",/* primitive v, measured by an Eulerian observer, 
                               // v^i = u^i/(alpha u^0) + beta^i / alpha
                               // where u^{mu}=(u^0,u^i) is the 4-velocity of the fluid. */
-                         
-  0/* --> detemine the last pointer */
+
+0/* --> detemine the last pointer */
 };
 
 static const char *const import_fields_no_matter[] = /* matter excluded */
@@ -44,85 +50,64 @@ static const char *const import_fields_no_matter[] = /* matter excluded */
 "adm_gyy","adm_gyz","adm_gzz",/* metric: g_ij */
 "adm_Kxx","adm_Kxy","adm_Kxz",/* extrinsic curvature: K_ij */
 "adm_Kyy","adm_Kyz","adm_Kzz",/* extrinsic curvature: K_ij */
-  0/* --> detemine the last pointer */
+
+0/* --> detemine the last pointer */
 };
+
+
 
 /* algorithm:
 // ==========
 // at each level:
-// 1. write grid points in Cartesian coords. (x,y,z) into a file
-// 2. call Elliptica and read this file composed of (x,y,z) coords.
-// 3. interpolate the required fields by bam at (x,y,z)
-// 4. write the values of interpolated fields into another file.
-// 5. read this file by bam to initializing the fields. 
+// 1. write the grid points in Cartesian coords., (x,y,z), into 1D arrays
+// 2. specify the required fields to be interpolated for bam
+// 3. call Elliptica to interpolate the fields on these (x,y,z)'s
+// 4. read the interpolated values and populate Bam's fields
+//
+// NOTE: the format of file names containing fields are "fields_level%d_proc%d.dat"
+//
 // ->return value: 0 */
 int EIDdataReader(tL *const level)
 {
   printf("{ Importing initial data from Elliptica ...\n");
-  
+
   const char *const outdir = Gets("outdir");
   const int rank = bampi_rank();
-  char coords_file_path[STR_LEN_MAX] = {'\0'};
   char fields_file_path[STR_LEN_MAX] = {'\0'};
-  
-  /* if this is a checkpoint, just read field values from files */
-  if(Getv("checkpoint","restart"))
+
+  // if this is a checkpoint, just read field values from the save files
+  if(Getv("checkpoint","restart") && Getv("EIDdataReader_save","yes"))
   {
     sprintf(fields_file_path, "%s_previous/%s/fields_level%d_proc%d.dat",
       outdir,Gets("EIDdataReader_outdir"), level->l, rank);
 
     /* populate fields for bam */
-    populate_fields_for_bam(level,fields_file_path);
+    read_fields_from_file(level,fields_file_path);
   }
-  /* if requested to load from specific directory */
+  // load from the specified directory
   else if (!Getv("EIDdataReader_loadfrom","not_set!"))
   {
     sprintf(fields_file_path, "%s/fields_level%d_proc%d.dat",
         Gets("EIDdataReader_loadfrom"), level->l, rank);
     
     /* populate fields for bam */
-    populate_fields_for_bam(level,fields_file_path);
-  }
-  else/* make everything from scratch */
-  {
-    /* files path */
-    sprintf(coords_file_path, "%s/%s/coords_level%d_proc%d.dat", 
-      outdir,Gets("EIDdataReader_outdir"), level->l, rank);
+    read_fields_from_file(level,fields_file_path);
     
-    sprintf(fields_file_path, "%s/%s/fields_level%d_proc%d.dat", 
-      outdir,Gets("EIDdataReader_outdir"),level->l, rank);
-    
-    /* write cartesian coords into file */
-    write_coords(level,coords_file_path);
-    
-    /* call elliptica and interpolate at (x,y,z) given by the coords file */
-    call_elliptica_and_write_fields(level,coords_file_path,fields_file_path);
-    
-    /* populate fields for bam */
-    populate_fields_for_bam(level,fields_file_path);
-    
-    /* delete created files */
-    if (DELETE)
+    // first run and save data into a dir (with writing field text data file). 
+    // then run another call, this time with EIDdataReader_loadfrom to the 
+    // dir that you just made. now read the fields and save them into text 
+    // files. finally compare the texts file between the two directories.
+    // they should match.
+    // NOTE: the run config, i.e., mpi etc should be the same.
+    if (EID_DEBUG)
     {
-       char command[STR_LEN_MAX2x]={'\0'};
-       int ret;
-       
-       sprintf(command,"rm -rf %s",coords_file_path);
-       printf("System call:\n%s\n",command);
-       fflush(stdout);
-       ret = system(command);
-       printf("System call returned: %d\n",ret);
-       fflush(stdout);
-       
-       /* delete interpolated fields:
-       sprintf(command,"rm -rf %s",fields_file_path);
-       printf("System call:\n%s\n",command);
-       fflush(stdout);
-       ret = system(command);
-       printf("System call returned: %d\n",ret);
-       fflush(stdout); 
-       */
+      debug_save_fields_to_txt(level,import_fields_with_matter);
     }
+  }
+  // interpolate from scratch and save (if asked)
+  else
+  {
+    interpolate_field(level);
   }
   
   printf("} Importing initial data from Elliptica --> Done.\n");
@@ -130,11 +115,153 @@ int EIDdataReader(tL *const level)
   return 0;
 }
 
-/* populating the fields made by Elliptica into bam */
-static void populate_fields_for_bam(tL *const level, char *const fields_file_path)
+/* set some params that important for making the grid */
+int EIDpreGrid(tL *const level)
 {
-  printf("~> Populating BAM variables based on initial data ...\n");
+  /* set pre grid parameters */
+  printf("Setting some parameters relevant for setting up bam's grid:\n");
+  
+  /* initialize ID Reader */ 
+  Elliptica_ID_Reader_T *idr = 
+    elliptica_id_reader_init(Gets("EIDdataReader_checkpoint"),"generic");
+  
+  if(Getv("EIDdataReader_physics","BHNS"))
+  {
+    const double sys_cm[3] = {
+      idr->get_param_dbl("BHNS_x_CM",idr),
+      idr->get_param_dbl("BHNS_y_CM",idr),
+      idr->get_param_dbl("BHNS_z_CM",idr)
+    };
+    
+    const double ns_c[3] = {
+      idr->get_param_dbl("NS_center_x",idr),
+      idr->get_param_dbl("NS_center_y",idr),
+      idr->get_param_dbl("NS_center_z",idr)
+    };
+
+    const double bh_c[3] = {
+      idr->get_param_dbl("BH_center_x",idr),
+      idr->get_param_dbl("BH_center_y",idr),
+      idr->get_param_dbl("BH_center_z",idr)
+    };
+
+    const double ns_m = idr->get_param_dbl("NS_baryonic_mass_current",idr);
+    const double bh_m = idr->get_param_dbl("BH_irreducible_mass_current",idr);
+    
+    // set pre grid params:
+
+    MySetd("mass1", ns_m);
+    MySetd("mass2", bh_m);
+    // note: r_elliptica = r_CM + r_bam 
+    //       = > r_bam = r_elliptica - r_CM. */
+    MySetd("px1", ns_c[0]-sys_cm[0]);
+    MySetd("py1", ns_c[1]-sys_cm[1]);
+    MySetd("pz1", ns_c[2]-sys_cm[2]);
+    MySetd("px2", bh_c[0]-sys_cm[0]);
+    MySetd("py2", bh_c[1]-sys_cm[1]);
+    MySetd("pz2", bh_c[2]-sys_cm[2]);
+    
+    /* for the bam BHfiller */
+    if (1)
+    {
+      /* note: the notation different here and object 1 is bh. */
+      MySetd("bhmass1",bh_m);
+      MySetd("bhmass2",0.);
+      MySetd("bhx1", Getd("px2"));
+      MySetd("bhy1", Getd("py2"));
+      MySetd("bhz1", Getd("pz2"));
+    }
+  }
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    const double sys_cm[3] = {
+      idr->get_param_dbl("SBH_x_CM",idr),
+      idr->get_param_dbl("SBH_y_CM",idr),
+      idr->get_param_dbl("SBH_z_CM",idr)
+    };
+    
+    const double bh_c[3] = {
+      idr->get_param_dbl("BH_center_x",idr),
+      idr->get_param_dbl("BH_center_y",idr),
+      idr->get_param_dbl("BH_center_z",idr)
+    };
+
+    const double bh_m = idr->get_param_dbl("BH_irreducible_mass_current",idr);
+    
+    // set pre grid params:
+
+    MySetd("mass1", bh_m);
+    MySetd("mass2", 0.);
+    // note: r_elliptica = r_CM + r_bam 
+    //       = > r_bam = r_elliptica - r_CM. */
+    MySetd("px1", bh_c[0]-sys_cm[0]);
+    MySetd("py1", bh_c[1]-sys_cm[1]);
+    MySetd("pz1", bh_c[2]-sys_cm[2]);
+    
+    /* for the bam BHfiller */
+    if (1)
+    {
+      MySetd("bhmass1",bh_m);
+      MySetd("bhmass2",0.);
+      MySetd("bhx1", Getd("px1"));
+      MySetd("bhy1", Getd("py1"));
+      MySetd("bhz1", Getd("pz1"));
+    }
+  }
+  else if(Getv("EIDdataReader_physics","NSNS"))
+  {
+    const double sys_cm[3] = {
+      idr->get_param_dbl("NSNS_x_CM",idr),
+      idr->get_param_dbl("NSNS_y_CM",idr),
+      idr->get_param_dbl("NSNS_z_CM",idr)
+    };
+    
+    const double ns1_c[3] = {
+      idr->get_param_dbl("NS1_center_x",idr),
+      idr->get_param_dbl("NS1_center_y",idr),
+      idr->get_param_dbl("NS1_center_z",idr)
+    };
+
+    const double ns2_c[3] = {
+      idr->get_param_dbl("NS2_center_x",idr),
+      idr->get_param_dbl("NS2_center_y",idr),
+      idr->get_param_dbl("NS2_center_z",idr)
+    };
+
+    const double ns1_m = idr->get_param_dbl("NS1_baryonic_mass_current",idr);
+    const double ns2_m = idr->get_param_dbl("NS2_baryonic_mass_current",idr);
+    
+    // set pre grid params:
+
+    MySetd("mass1", ns1_m);
+    MySetd("mass2", ns2_m);
+    // note: r_elliptica = r_CM + r_bam 
+    //       = > r_bam = r_elliptica - r_CM. */
+    MySetd("px1", ns1_c[0]-sys_cm[0]);
+    MySetd("py1", ns1_c[1]-sys_cm[1]);
+    MySetd("pz1", ns1_c[2]-sys_cm[2]);
+    MySetd("px2", ns2_c[0]-sys_cm[0]);
+    MySetd("py2", ns2_c[1]-sys_cm[1]);
+    MySetd("pz2", ns2_c[2]-sys_cm[2]);
+    
+  }
+  else
+  {
+    errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
+   
+  // free workspace
+  elliptica_id_reader_free(idr);
+  
+  return 0;
+}
+
+/* populating the fields made by Elliptica into bam */
+static void read_fields_from_file(tL *const level, char *const fields_file_path)
+{
+  printf("calling: %s ...\n",__func__);
   fflush(stdout);
+  
   FILE *file = 0;
   double *v  = 0;
   char *v_name = 0;
@@ -166,7 +293,7 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
   free(match_str);
   
   /* read fields content */
-  if(Getv("EIDdataReader_physics",BHNS))
+  if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS"))
   {
     f = 0;
     while(import_fields_with_matter[f])
@@ -194,7 +321,7 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
       ++f;
     }
   }
-  else if(Getv("EIDdataReader_physics",SBH))
+  else if(Getv("EIDdataReader_physics","SBH"))
   {
     f = 0;
     while(import_fields_no_matter[f])
@@ -223,7 +350,9 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
     }
   }
   else
+  {
     errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
     
   FReadP_bin(match_str);/* read footer */
   if (strcmp(match_str,FOOTER))
@@ -242,7 +371,7 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
   i = Ind("adm_dpsiopsix");   enablevar(level, i);
   i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
   
-  if(Getv("EIDdataReader_physics",BHNS))
+  if(Getv("EIDdataReader_physics","BHNS"))
   {
   /* set S_i's and S_ij's */
     i = Ind("adm_Sx");   enablevar(level, i);
@@ -301,305 +430,368 @@ static void populate_fields_for_bam(tL *const level, char *const fields_file_pat
     }
   }
 
-  printf("~> Populating BAM variables based on initial data --> Done.\n");
-  fflush(stdout);
 }
 
-/* call elliptica and interpolate at (x,y,z) given by the file */
-static void call_elliptica_and_write_fields(tL *const level,char *const coords_file_path, char *const fields_file_path)
+// after interpolation of *field_names* save the data into the given *file_path*
+static void save_interpolated_values(tL *const level,const char *const file_path, 
+                                     const char *const field_names[])
 {
-  const int rank = bampi_rank();
-  const char *const outdir = Gets("outdir");
-  FILE *id_parfile = 0;
-  char command[STR_LEN_MAX] = {'\0'};
-  char elliptica_parfile[STR_LEN_MAX] = {'\0'};
-  char id_parfile_path[STR_LEN_MAX] = {'\0'};
-  char id_parfile_name[STR_LEN_MAX] = {'\0'};
-  char id_outdir[STR_LEN_MAX] = {'\0'};
-  char str[STR_LEN_MAX] = {'\0'};
-  char *stem;
-  int ret,i;
-  
-  /* initiliazing names and paths */
-  sprintf(str,"%s",Gets("EIDdataReader_datadir"));/* --> a/b/c */
-  if (str[strlen(str)-1] == '/')/* if there is / at the end of path */
-    str[strlen(str)-1] = '\0';/* if a/b/c/ */
-  sprintf(id_outdir,"%s",str);
-  stem = strrchr(str,'/');/* stem = /c */
-  if (!stem)/* if stem = a */
-    stem = str;/* stem = a */
-  else
-    stem++;/* stem = c */
-  
-  /* copying parfile for this process id */
-  sprintf(id_parfile_path,"%s/%s.par",
-          id_outdir,stem);/* a/b/c/idfile.par */
-  
-  /* check if the parfile exists or the name is correct */        
-  id_parfile = fopen(id_parfile_path,"r");
-  if (!id_parfile)
-    errorexits("could not open '%s'.\n "
-               "Make sure directory and parfile have the same name.", id_parfile_path);
-  fclose(id_parfile);
-  
-  sprintf(id_parfile_name,"%s_elliptica_level%d_proc%d.par",
-          stem,level->l,rank);/* idfile_elliptica_level?_proc?.par */
-  sprintf(command,"cp %s %s/%s/%s",
-          id_parfile_path,outdir,Gets("EIDdataReader_outdir"),
-          id_parfile_name);/* cp idfile.par idfile_elliptica_level?_proc?.par */
-  sprintf(id_parfile_path,"%s/%s/%s",
-          outdir,Gets("EIDdataReader_outdir"),
-          id_parfile_name);/* outdir/idfile_elliptica_level?_proc?.par */
-  printf("System call:\n%s\n",command);
-  fflush(stdout);
-  ret = system(command);
-  printf("System call returned: %d\n",ret);
-  fflush(stdout);
-  
-  /* modifying Elliptica parfile for bam */        
-  id_parfile = fopen(id_parfile_path,"a");
-  if (!id_parfile)
-    errorexits("could not open %s", id_parfile_path);
-    
-  /* adding these paramters to Elliptica parfile to direct */
-  if(Getv("EIDdataReader_physics",BHNS))
-  {
-      i = 0;
-    str[0] = '\0';
-    while(import_fields_with_matter[i])
-    {
-      strcat(str,import_fields_with_matter[i]);
-      strcat(str,",");
-      i++;
-    }
-    fprintf(id_parfile,"\n");
-    fprintf(id_parfile,BHNS_ EVO_"export_id    = yes\n");
-    fprintf(id_parfile,Pbhns_"export_id        = yes\n");
-    fprintf(id_parfile,Pbhns_"coords_file_path = %s\n",coords_file_path);
-    fprintf(id_parfile,Pbhns_"fields_file_path = %s\n",fields_file_path);
-    fprintf(id_parfile,Pbhns_"fields_name      = %s\n",str);
-    fprintf(id_parfile,Pbhns_"filler_method    = %s\n",Gets("EIDdataReader_BHfiller"));
-    fprintf(id_parfile,MODIFY"ADM_B1I_form     = %s\n",Gets("EIDdataReader_inf_shift"));
-    fprintf(id_parfile,Pbhns_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,BHNS_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,"\n");
-  }
-  else if(Getv("EIDdataReader_physics",SBH))
-  {
-    i = 0;
-    str[0] = '\0';
-    while(import_fields_no_matter[i])
-    {
-      strcat(str,import_fields_no_matter[i]);
-      strcat(str,",");
-      i++;
-    }
-    
-    fprintf(id_parfile,"\n");
-    fprintf(id_parfile,SBH_ EVO_"export_id    = yes\n");
-    fprintf(id_parfile,Psbh_"export_id        = yes\n");
-    fprintf(id_parfile,Psbh_"coords_file_path = %s\n",coords_file_path);
-    fprintf(id_parfile,Psbh_"fields_file_path = %s\n",fields_file_path);
-    fprintf(id_parfile,Psbh_"fields_name      = %s\n",str);
-    fprintf(id_parfile,Psbh_"filler_method    = %s\n",Gets("EIDdataReader_BHfiller"));
-    fprintf(id_parfile,Psbh_"checkpoint_file_path     = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,SBH_ EVO_"checkpoint_file_path = %s/checkpoint.dat\n",id_outdir);
-    fprintf(id_parfile,"\n");
-  }
-  else
-    errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
-
-  fclose(id_parfile);
-  
-  /* call Elliptica */
-  sprintf(command, "%s %s",Gets("EIDdataReader_exe"),id_parfile_path);
-  printf("System call:\n%s\n", command);
-  fflush(stdout);
-  ret = system(command);
-  printf("System call returned: %d\n", ret);
+  printf("calling: %s ...\n",__func__);
   fflush(stdout);
 
-  /* remove par id_parfile */
-  if (DELETE)
-  {
-    /* rm -rf outdir/idfile_elliptica_level?_proc?.par */
-    sprintf(command,"rm -rf %s",id_parfile_path);
-    printf("System call:\n%s\n",command);
-    fflush(stdout);
-    ret = system(command);
-  }
-  printf("System call returned: %d\n", ret);
-  fflush(stdout);
-}
-  
-/* write grid point in Cartesian coords. (x,y,z) into a file.
-// ->return value: pointer to the file path */
-static void write_coords(tL *const level,char *const coords_file_path)
-{
   FILE *file = 0;
   char title_line[STR_LEN_MAX];
   char *const p_title_line = title_line;/* to avoid GCC warning for FWriteP_bin */
-  const double *const x = level->v[Ind("x")];
-  const double *const y = level->v[Ind("y")];
-  const double *const z = level->v[Ind("z")];
-  const double x_CM = Getd("EIDdataReader_x_CM");
-  const double y_CM = Getd("EIDdataReader_y_CM");
-  const double z_CM = Getd("EIDdataReader_z_CM");
-  int i;
+  char msg[STR_LEN_MAX] = {'\0'};
+  char *const p_msg = msg;/* to avoid GCC warning for FWriteP_bin */
+  char fnames[STR_LEN_MAX] = {'\0'};
+  int fld,i;
   
-  file = fopen(coords_file_path, "wb");
-  if(!file) 
-    errorexits("could not open %s", coords_file_path);
+  // open
+  file = fopen(file_path,"wb");
+  if(!file) errorexits("could not open %s", file_path);
   
-  /* write coords file */
-  fprintf(file,"# this file contains (x,y,z) of bam grid points.\n");
+  // prepare and write the header
+  fld = 0;
+  fnames[0] = '\0';
+  while(field_names[fld])
+  {
+    strcat(fnames,field_names[fld]);
+    strcat(fnames,",");
+    fld++;
+  }
+  fnames[strlen(fnames)-1] = '\0';/* rm the last ',' */
+  fprintf(file,"# this file contains values of %s\n",fnames);
   sprintf(title_line,"%s",HEADER);
   FWriteP_bin(p_title_line,strlen(title_line)+1);
-  FWriteV_bin(level->npoints,1);
-  /* note: r_elliptica = r_CM + r_bam = > r_bam = r_elliptica - r_CM. */
-  forallpoints(level, i)
+
+  // write
+  fld = 0;
+  while(field_names[fld])
   {
-    double x_ell = x[i]+x_CM;
-    double y_ell = y[i]+y_CM;
-    double z_ell = z[i]+z_CM;
+    // write field name
+    FWriteP_bin(field_names[fld],strlen(field_names[fld])+1);
+    const double *interp_v = level->v[Ind(field_names[fld])];
     
-    FWriteV_bin(x_ell,1);
-    FWriteV_bin(y_ell,1);
-    FWriteV_bin(z_ell,1);
+    // write its values
+    forallpoints(level, i)
+    {
+      /* write it into the fields_file */
+      FWriteV_bin(interp_v[i],1);
+    }
+    fld++;
   }
+  
+  // close 
   sprintf(title_line,"%s",FOOTER);
   FWriteP_bin(p_title_line,strlen(title_line)+1);
-  
-  fclose(file);
+  sprintf(msg,"%s",END_MSG);
+  FWriteP_bin(p_msg,strlen(msg)+1);
+  Fclose(file);
 }
 
-/* set some pars important for making the grid */
-int EIDpreGrid(tL *const level)
+// interpolate from scratch and save (if asked)
+static void interpolate_field(tL *const level)
 {
-  /* set pre grid parameters */
-  printf("Setting some parameters relevant for setting up bam's grid:\n");
+  printf("calling: %s ...\n",__func__);
+  fflush(stdout);
+
+  double *const x = level->v[Ind("x")];
+  double *const y = level->v[Ind("y")];
+  double *const z = level->v[Ind("z")];
+  const int rank  = bampi_rank();
+  const char *const outdir = Gets("outdir");
+  char fields_file_path[STR_LEN_MAX] = {'\0'};
+  int i;
   
-  if(Getv("EIDdataReader_physics",BHNS))
+  /* initialize ID Reader */ 
+  Elliptica_ID_Reader_T *idr = 
+    elliptica_id_reader_init(Gets("EIDdataReader_checkpoint"),"generic");
+  
+  // specify interpolation points
+  idr->npoints  = level->npoints;
+  idr->x_coords = x;
+  idr->y_coords = y;
+  idr->z_coords = z;
+  
+  /* specify interpolating fields */
+  if(Getv("EIDdataReader_physics","BHNS"))
   {
-    FILE *file = 0;
-    char *const file_NAME = BHNS_"properties.txt";
-    double ns_m,bh_m;/* gravitational masses of NS and BH */
-    double ns_center_x,ns_center_y,ns_center_z;/* NS center coords */
-    double bh_center_x,bh_center_y,bh_center_z;/* BH center coords */
-    double x_CM,y_CM,z_CM;/* elliptica's CM of system */
-    char id_outdir[STR_LEN_MAX] = {'\0'};
-    char file_path[STR_LEN_MAX] = {'\0'};
-    char str[STR_LEN_MAX] = {'\0'};
-    int ret;
-    
-    /* open ?_properties.txt */
-    sprintf(str,"%s",Gets("EIDdataReader_datadir"));/* --> a/b/c */
-    if (str[strlen(str)-1] == '/')/* if there is / at the end of path */
-      str[strlen(str)-1] = '\0';/* if a/b/c/ */
-    sprintf(id_outdir,"%s",str);
-    sprintf(file_path,"%s/%s",id_outdir,file_NAME);
-    file = fopen(file_path,"r");
-    if(!file) 
-      errorexits("could not open %s", file_path);
-
-    /* read parameters from ?_properties.txt */
-    READ_PARAMETER_FROM_FILE(x_CM,BHNS_"x_CM")
-    READ_PARAMETER_FROM_FILE(y_CM,BHNS_"y_CM")
-    READ_PARAMETER_FROM_FILE(z_CM,BHNS_"z_CM")
-    
-    /* set CM params for translation */
-    MySetd("EIDdataReader_x_CM",x_CM);
-    MySetd("EIDdataReader_y_CM",y_CM);
-    MySetd("EIDdataReader_z_CM",z_CM);
-    
-    READ_PARAMETER_FROM_FILE(ns_center_x,"NS_center_x")
-    READ_PARAMETER_FROM_FILE(ns_center_y,"NS_center_y")
-    READ_PARAMETER_FROM_FILE(ns_center_z,"NS_center_z")
-    
-    READ_PARAMETER_FROM_FILE(bh_center_x,"BH_center_x")
-    READ_PARAMETER_FROM_FILE(bh_center_y,"BH_center_y")
-    READ_PARAMETER_FROM_FILE(bh_center_z,"BH_center_z")
-    
-    READ_PARAMETER_FROM_FILE(ns_m,"NS_baryonic_mass_current")
-    READ_PARAMETER_FROM_FILE(bh_m,"BH_irreducible_mass_current")
-    
-    /* set pre grid params 
-    // note: r_elliptica = r_CM + r_bam 
-    //       = > r_bam = r_elliptica - r_CM. */
-    MySetd("mass1", ns_m);
-    MySetd("mass2", bh_m);
-    MySetd("px1", ns_center_x-x_CM);
-    MySetd("py1", ns_center_y-y_CM);
-    MySetd("pz1", ns_center_z-z_CM);
-    MySetd("px2", bh_center_x-x_CM);
-    MySetd("py2", bh_center_y-y_CM);
-    MySetd("pz2", bh_center_z-z_CM);
-    
-    /* for BHfiller */
-    if (1)
-    {
-      /* note: the notation different here and object 1 is bh. */
-      MySetd("bhmass1",bh_m);
-      MySetd("bhmass2",0.);
-      MySetd("bhx1", bh_center_x-x_CM);
-      MySetd("bhy1", bh_center_y-y_CM);
-      MySetd("bhz1", bh_center_z-z_CM);
-    }
-    
-    fclose(file);
+    idr->ifields = "alpha,betax,betay,betaz,"
+                   "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
+                   "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz,"
+                   "grhd_rho,grhd_p,grhd_epsl,grhd_vx,grhd_vy,grhd_vz";
+    idr->set_param("BH_filler_method",Gets("EIDdataReader_BHfiller"),idr);
+    idr->set_param("ADM_B1I_form","zero",idr); 
   }
-  else if(Getv("EIDdataReader_physics",SBH))
+  else if(Getv("EIDdataReader_physics","NSNS"))
   {
-    FILE *file = 0;
-    char *const file_NAME = SBH_"properties.txt";
-    double ns_m,bh_m;/* gravitational masses of NS and BH */
-    double ns_center_x,ns_center_y,ns_center_z;/* NS center coords */
-    double bh_center_x,bh_center_y,bh_center_z;/* BH center coords */
-    double x_CM,y_CM,z_CM;/* elliptica's CM of system */
-    char id_outdir[STR_LEN_MAX] = {'\0'};
-    char file_path[STR_LEN_MAX] = {'\0'};
-    char str[STR_LEN_MAX] = {'\0'};
-    int ret;
-    
-    /* open ?_properties.txt */
-    sprintf(str,"%s",Gets("EIDdataReader_datadir"));/* --> a/b/c */
-    if (str[strlen(str)-1] == '/')/* if there is / at the end of path */
-      str[strlen(str)-1] = '\0';/* if a/b/c/ */
-    sprintf(id_outdir,"%s",str);
-    sprintf(file_path,"%s/%s",id_outdir,file_NAME);
-    file = fopen(file_path,"r");
-    if(!file) 
-      errorexits("could not open %s", file_path);
-
-    /* read parameters from ?_properties.txt */
-    READ_PARAMETER_FROM_FILE(x_CM,SBH_"x_CM")
-    READ_PARAMETER_FROM_FILE(y_CM,SBH_"y_CM")
-    READ_PARAMETER_FROM_FILE(z_CM,SBH_"z_CM")
-    
-    /* set CM params for translation */
-    MySetd("EIDdataReader_x_CM",x_CM);
-    MySetd("EIDdataReader_y_CM",y_CM);
-    MySetd("EIDdataReader_z_CM",z_CM);
-    
-    READ_PARAMETER_FROM_FILE(bh_center_x,"BH_center_x")
-    READ_PARAMETER_FROM_FILE(bh_center_y,"BH_center_y")
-    READ_PARAMETER_FROM_FILE(bh_center_z,"BH_center_z")
-    
-    READ_PARAMETER_FROM_FILE(bh_m,"BH_irreducible_mass")
-    
-    /* set pre grid params 
-    // note: r_elliptica = r_CM + r_bam 
-    //       = > r_bam = r_elliptica - r_CM. */
-    MySetd("mass1", bh_m);
-    MySetd("mass2", 0);
-    MySetd("px1", bh_center_x-x_CM);
-    MySetd("py1", bh_center_y-y_CM);
-    MySetd("pz1", bh_center_z-z_CM);
-    
-    fclose(file);
+    idr->ifields = "alpha,betax,betay,betaz,"
+                   "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
+                   "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz,"
+                   "grhd_rho,grhd_p,grhd_epsl,grhd_vx,grhd_vy,grhd_vz";
+    idr->set_param("ADM_B1I_form","zero",idr); 
+  }
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    idr->ifields = "alpha,betax,betay,betaz,"
+                   "adm_gxx,adm_gxy,adm_gxz,adm_gyy,adm_gyz,adm_gzz,"
+                   "adm_Kxx,adm_Kxy,adm_Kxz,adm_Kyy,adm_Kyz,adm_Kzz";
   }
   else
+  {
     errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
   
-  return 0;
+  /* interpolate */
+  elliptica_id_reader_interpolate(idr);
+  
+  // save level indices for a slight optimization (no matter field)
+  // bam's indices
+  const int ibam_alpha = Ind("alpha");
+  const int ibam_betax = Ind("betax");
+  const int ibam_betay = Ind("betay");
+  const int ibam_betaz = Ind("betaz");
+
+  const int ibam_adm_gxx = Ind("adm_gxx");
+  const int ibam_adm_gxy = Ind("adm_gxy");
+  const int ibam_adm_gxz = Ind("adm_gxz");
+  const int ibam_adm_gyy = Ind("adm_gyy");
+  const int ibam_adm_gyz = Ind("adm_gyz");
+  const int ibam_adm_gzz = Ind("adm_gzz");
+  
+  const int ibam_adm_Kxx = Ind("adm_Kxx");
+  const int ibam_adm_Kxy = Ind("adm_Kxy");
+  const int ibam_adm_Kxz = Ind("adm_Kxz");
+  const int ibam_adm_Kyy = Ind("adm_Kyy");
+  const int ibam_adm_Kyz = Ind("adm_Kyz");
+  const int ibam_adm_Kzz = Ind("adm_Kzz");
+
+  // elliptica's indices
+  const int iell_alpha   = idr->indx("alpha");
+  const int iell_betax   = idr->indx("betax");
+  const int iell_betay   = idr->indx("betay");
+  const int iell_betaz   = idr->indx("betaz");
+  
+  const int iell_adm_gxx = idr->indx("adm_gxx");
+  const int iell_adm_gxy = idr->indx("adm_gxy");
+  const int iell_adm_gxz = idr->indx("adm_gxz");
+  const int iell_adm_gyy = idr->indx("adm_gyy");
+  const int iell_adm_gyz = idr->indx("adm_gyz");
+  const int iell_adm_gzz = idr->indx("adm_gzz");
+
+  const int iell_adm_Kxx = idr->indx("adm_Kxx");
+  const int iell_adm_Kxy = idr->indx("adm_Kxy");
+  const int iell_adm_Kxz = idr->indx("adm_Kxz");
+  const int iell_adm_Kyy = idr->indx("adm_Kyy");
+  const int iell_adm_Kyz = idr->indx("adm_Kyz");
+  const int iell_adm_Kzz = idr->indx("adm_Kzz");
+  
+  // populate fields
+  if(Getv("EIDdataReader_physics","BHNS") || Getv("EIDdataReader_physics","NSNS") )
+  {
+    // bam's indices
+    const int ibam_grhd_rho  = Ind("grhd_rho");
+    const int ibam_grhd_epsl = Ind("grhd_epsl");
+    const int ibam_grhd_p    = Ind("grhd_p");
+    const int ibam_grhd_vx   = Ind("grhd_vx");
+    const int ibam_grhd_vy   = Ind("grhd_vy");
+    const int ibam_grhd_vz   = Ind("grhd_vz");
+
+    // elliptica's indices
+    const int iell_grhd_rho  = idr->indx("grhd_rho");
+    const int iell_grhd_epsl = idr->indx("grhd_epsl");
+    const int iell_grhd_p    = idr->indx("grhd_p");
+    const int iell_grhd_vx   = idr->indx("grhd_vx");
+    const int iell_grhd_vy   = idr->indx("grhd_vy");
+    const int iell_grhd_vz   = idr->indx("grhd_vz");
+
+    int fld = 0;
+    while(import_fields_with_matter[fld])
+    {
+     /* enable */   
+      int comp = Ind(import_fields_with_matter[fld]);
+      enablevarcomp(level, comp);
+      fld++;
+    }
+
+    forallpoints(level, i)
+    {
+      level->v[ibam_alpha][i]   = idr->field[iell_alpha][i];
+      level->v[ibam_betax][i]   = idr->field[iell_betax][i];
+      level->v[ibam_betay][i]   = idr->field[iell_betay][i];
+      level->v[ibam_betaz][i]   = idr->field[iell_betaz][i];
+
+      level->v[ibam_adm_gxx][i] = idr->field[iell_adm_gxx][i];
+      level->v[ibam_adm_gxy][i] = idr->field[iell_adm_gxy][i];
+      level->v[ibam_adm_gxz][i] = idr->field[iell_adm_gxz][i];
+      level->v[ibam_adm_gyy][i] = idr->field[iell_adm_gyy][i];
+      level->v[ibam_adm_gyz][i] = idr->field[iell_adm_gyz][i];
+      level->v[ibam_adm_gzz][i] = idr->field[iell_adm_gzz][i];
+
+      level->v[ibam_adm_Kxx][i] = idr->field[iell_adm_Kxx][i];
+      level->v[ibam_adm_Kxy][i] = idr->field[iell_adm_Kxy][i];
+      level->v[ibam_adm_Kxz][i] = idr->field[iell_adm_Kxz][i];
+      level->v[ibam_adm_Kyy][i] = idr->field[iell_adm_Kyy][i];
+      level->v[ibam_adm_Kyz][i] = idr->field[iell_adm_Kyz][i];
+      level->v[ibam_adm_Kzz][i] = idr->field[iell_adm_Kzz][i];
+
+      level->v[ibam_grhd_rho][i]  = idr->field[iell_grhd_rho][i];
+      level->v[ibam_grhd_epsl][i] = idr->field[iell_grhd_epsl][i];
+      level->v[ibam_grhd_p][i]    = idr->field[iell_grhd_p][i];
+      level->v[ibam_grhd_vx][i]   = idr->field[iell_grhd_vx][i];
+      level->v[ibam_grhd_vy][i]   = idr->field[iell_grhd_vy][i];
+      level->v[ibam_grhd_vz][i]   = idr->field[iell_grhd_vz][i];
+    }
+    
+    /* special treatments: */
+    /* set psi and its derivs */
+    i = Ind("adm_psi"); enablevar(level, i);
+    double *psi = level->v[i++];
+    forallpoints(level,i)
+    {
+      psi[i] = 1.0;
+    }
+    i = Ind("adm_dpsiopsix");   enablevar(level, i);
+    i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
+    /* set S_i's and S_ij's */
+    i = Ind("adm_Sx");   enablevar(level, i);
+    i = Ind("adm_SSxx"); enablevar(level, i);
+    /* adm_rho */
+    i = Ind("adm_rho"); enablevar(level, i);
+    
+    if (Getv("EIDdataReader_save","yes"))
+    {
+      sprintf(fields_file_path, "%s/%s/fields_level%d_proc%d.dat", 
+        outdir,Gets("EIDdataReader_outdir"),level->l, rank);
+          
+      save_interpolated_values(level,fields_file_path,import_fields_with_matter);
+    }
+    
+    if (EID_DEBUG)
+    {
+      debug_save_fields_to_txt(level,import_fields_with_matter);
+    }
+    
+  }
+  else if(Getv("EIDdataReader_physics","SBH"))
+  {
+    int fld = 0;
+    while(import_fields_no_matter[fld])
+    {
+     /* enable */   
+      int comp = Ind(import_fields_no_matter[fld]);
+      enablevarcomp(level, comp);
+      fld++;
+    }
+
+    forallpoints(level, i)
+    {
+      level->v[ibam_alpha][i]   = idr->field[iell_alpha][i];
+      level->v[ibam_betax][i]   = idr->field[iell_betax][i];
+      level->v[ibam_betay][i]   = idr->field[iell_betay][i];
+      level->v[ibam_betaz][i]   = idr->field[iell_betaz][i];
+
+      level->v[ibam_adm_gxx][i] = idr->field[iell_adm_gxx][i];
+      level->v[ibam_adm_gxy][i] = idr->field[iell_adm_gxy][i];
+      level->v[ibam_adm_gxz][i] = idr->field[iell_adm_gxz][i];
+      level->v[ibam_adm_gyy][i] = idr->field[iell_adm_gyy][i];
+      level->v[ibam_adm_gyz][i] = idr->field[iell_adm_gyz][i];
+      level->v[ibam_adm_gzz][i] = idr->field[iell_adm_gzz][i];
+
+      level->v[ibam_adm_Kxx][i] = idr->field[iell_adm_Kxx][i];
+      level->v[ibam_adm_Kxy][i] = idr->field[iell_adm_Kxy][i];
+      level->v[ibam_adm_Kxz][i] = idr->field[iell_adm_Kxz][i];
+      level->v[ibam_adm_Kyy][i] = idr->field[iell_adm_Kyy][i];
+      level->v[ibam_adm_Kyz][i] = idr->field[iell_adm_Kyz][i];
+      level->v[ibam_adm_Kzz][i] = idr->field[iell_adm_Kzz][i];
+    }
+    
+    /* special treatments: */
+    /* set psi and its derivs */
+    i = Ind("adm_psi"); enablevar(level, i);
+    double *psi = level->v[i++];
+    forallpoints(level,i)
+    {
+      psi[i] = 1.0;
+    }
+    i = Ind("adm_dpsiopsix");   enablevar(level, i);
+    i = Ind("adm_ddpsiopsixx"); enablevar(level, i);
+
+    if (Getv("EIDdataReader_save","yes"))
+    {
+      sprintf(fields_file_path, "%s/%s/fields_level%d_proc%d.dat", 
+        outdir,Gets("EIDdataReader_outdir"),level->l, rank);
+      
+      save_interpolated_values(level,fields_file_path,import_fields_no_matter);
+    }
+    
+    if (EID_DEBUG)
+    {
+      debug_save_fields_to_txt(level,import_fields_no_matter);
+    }
+  }
+  else
+  {
+    errorexits("No such %s implemented!",Gets("EIDdataReader_physics"));
+  }
+
+  /* some tests */
+  double *const gxx = level->v[ibam_adm_gxx];
+  double *const gxy = level->v[ibam_adm_gxy];
+  double *const gxz = level->v[ibam_adm_gxz];
+  double *const gyy = level->v[ibam_adm_gyy];
+  double *const gyz = level->v[ibam_adm_gyz];
+  double *const gzz = level->v[ibam_adm_gzz];
+  double detg;
+
+  /* check if determinant is positvie, since the metric is Reimannian */
+  forallpoints(level,i)
+  {
+    detg=(2.*gxy[i]*gxz[i]*gyz[i] + gxx[i]*gyy[i]*gzz[i] -
+             gzz[i]*gxy[i]*gxy[i] - gyy[i]*gxz[i]*gxz[i] -
+             gxx[i]*gyz[i]*gyz[i]);
+
+    if(detg<=0.)
+    {
+      printf("det(g_ij)=%g at ccc=i=%d:  x=%g y=%g z=%g\n", 
+             detg, i, x[i], y[i], z[i]);
+    }
+  }
+  // free workspace
+  elliptica_id_reader_free(idr);
+}
+
+// save field to txt files for debug purposes
+static void debug_save_fields_to_txt(tL *const level,const char *const field_names[])
+{
+  printf("calling: %s ...\n",__func__);
+  fflush(stdout);
+  
+  const char *const outdir = Gets("outdir");
+  const int rank = bampi_rank();
+  FILE *file = 0;
+  char file_path[STR_LEN_MAX] = {'\0'};
+  int fld,i;
+  
+  fld = 0;
+  while(field_names[fld])
+  {
+    sprintf(file_path, "%s/%s/debug_%s_level%d_proc%d.txt", 
+            outdir,Gets("EIDdataReader_outdir"),field_names[fld],level->l, rank);
+  
+    file = fopen(file_path,"w");
+    if(!file) errorexits("could not open %s", file_path);
+  
+    const double *interp_v = level->v[Ind(field_names[fld])];
+    fprintf(file,"# point_index %s\n",field_names[fld]);
+    // write its values
+    forallpoints(level, i)
+    {
+      fprintf(file,"%d %0.15e\n",i,interp_v[i]);
+    }
+    fld++;
+    
+    Fclose(file);
+  }
 }

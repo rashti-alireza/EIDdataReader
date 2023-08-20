@@ -5,6 +5,9 @@
 
 #define STR_LEN_MAX (1000)
 
+int EIDdataReader(tL *const level);
+int EIDpreGrid(tL *const level);
+
 /* get binary black hole neutron star initial data into bam */
 void bam_EIDdataReader(void) 
 {
@@ -12,38 +15,21 @@ void bam_EIDdataReader(void)
   
   /* functions */
   AddFun(PRE_GRID, EIDpreGrid,
-      "set some pars important for making the grid");
+      "set some params that are important for making the grid");
   AddFun(INITIALDATA_SET, EIDdataReader,
       "Import initial data made by Elliptica");
   
   /* parameters */
   printf("Adding EID initial data reader: read data from Elliptica\n");
 
-  AddPar("EIDdataReader_exe", "./elliptica", 
-         "location of elliptica executable");
-  AddPar("EIDdataReader_datadir", "",
-         "location of elliptica outdir with data");
+  AddPar("EIDdataReader_checkpoint", "",
+         "/full/path/to/elliptica/checkpoint/file");
   
-  /* load from this dir */
-  AddPar("EIDdataReader_loadfrom", "not_set!",
-         "if this param is set, it won't call Elliptica anymore and "
-         "just reads data from the given directory."
-         "Used to quickly load data into bam for debug purposes.");
-  
-  /* set output directory */
-  AddPar("EIDdataReader_outdir", "elliptica_id",
-         "location of imported initial data for bam");
-
-  /* mkdir outdir if not exists */
-  char mydir[STR_LEN_MAX];
-  sprintf(mydir,"%s/%s",Gets("outdir"),Gets("EIDdataReader_outdir"));
-  if (processor0 && !system_isdir(mydir))
-    if (system_mkdir(mydir)) errorexit("mkdir failed!");
-
   AddPar("EIDdataReader_physics", "BHNS",
-  "The physical system which this initial data was constructed."
+  "The physical system that the initial data were constructed."
   "options:"
   "BHNS: BH-NS binary"
+  "NSNS: NS-NS binary"
   "SBH : single BH");
   
   AddPar("EIDdataReader_BHfiller","ChebTn_Ylm_perfect_s2",
@@ -59,10 +45,29 @@ void bam_EIDdataReader(void)
    "options: [zero,inspiral]"
    "o. zero     = for inertial frame."
    "o. inspiral = for corotating frame.");
+
+  AddPar("EIDdataReader_save", "no",
+         "write the interpolated data into files in 'EIDdataReader_outdir'. "
+         "so after a restart from a checkpoint, it reads this files directly "
+         "and no interpolation is called."
+         "optiones: [yes,no]");
+
+  /* load from this dir */
+  AddPar("EIDdataReader_loadfrom", "not_set!",
+         "if this param is set, it won't call Elliptica anymore and "
+         "just reads data from the given directory."
+         "Used to quickly load data into bam for debug purposes.");
+
+  /* set output directory */
+  AddPar("EIDdataReader_outdir", "elliptica_id",
+         "location of imported initial data for bam");
   
-  AddPar("EIDdataReader_x_CM","0","elliptica's x_CM of system");
-  AddPar("EIDdataReader_y_CM","0","elliptica's y_CM of system");
-  AddPar("EIDdataReader_z_CM","0","elliptica's z_CM of system");
+  /* mkdir outdir if not exists */
+  char mydir[STR_LEN_MAX];
+  sprintf(mydir,"%s/%s",Gets("outdir"),Gets("EIDdataReader_outdir"));
+  if (processor0 && !system_isdir(mydir))
+    if (system_mkdir(mydir)) errorexit("mkdir failed!");
+  
   AddPar("mass1","1.0", "used in grid setup at PRE_GRID");
   AddPar("mass2","1.0", "used in grid setup at PRE_GRID");
   
